@@ -812,4 +812,139 @@ body.results-page {
     .header-left {
         gap: 0.5rem;
     }
+}/* Option 1: Logo on left, user info on right */
+.quiz-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.95);
+    padding: 0.8rem 1.5rem;
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+    height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.company-logo {
+    height: 45px; /* Adjust size here */
+    width: auto;
+    border-radius: 8px;
+    object-fit: contain;
+    transition: transform 0.3s ease;
+}
+
+.company-logo:hover {
+    transform: scale(1.05);
+}
+
+.company-name {
+    color: white;
+    font-weight: bold;
+    font-size: 1.3rem;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    color: white;
+}
+/* Option 2: Centered Logo */
+.quiz-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.95);
+    padding: 0.8rem 1.5rem;
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+    height: 70px;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.header-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.company-logo {
+    height: 50px; /* Larger for center position */
+    width: auto;
+    border-radius: 10px;
+    object-fit: contain;
+}
+
+.company-name {
+    color: white;
+    font-weight: bold;
+    font-size: 1.4rem;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 1rem;
+    color: white;
+}
+/* Option 3: Logo with background */
+.company-logo {
+    height: 50px;
+    width: auto;
+    border-radius: 12px;
+    object-fit: contain;
+    padding: 5px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.company-name {
+    color: white;
+    font-weight: bold;
+    font-size: 1.3rem;
+    background: linear-gradient(45deg, #FFD700, #FFA000);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+.company-name {
+    color: white;
+    font-weight: bold;
+    font-size: 1.3rem;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+    
+    /* Gradient Text Effect */
+    background: linear-gradient(45deg, #FFD700, #FFA000);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Or solid color */
+.company-name {
+    color: #FFD700; /* Gold color */
+    font-weight: bold;
+    font-size: 1.3rem;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
 }

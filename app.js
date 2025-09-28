@@ -5,14 +5,14 @@ const questions = [
         question: "",
         options: ['13', '6', '10', '12'],
         image: 'images/Question1.jpg',
-        correctAnswer: 0
+        correctAnswer: 2
     },
     {
         id: 2,
         question: "",
         options: ['784', '512', '900', "841"],
         image: 'images/Question2.jpg',
-        correctAnswer: 3
+        correctAnswer: 0
     },
     {
         id: 3,
@@ -33,35 +33,35 @@ const questions = [
         question: "",
         options: ['243', '441', '526', '625'],
         image: 'images/Question5.jpg',
-        correctAnswer: 3
+        correctAnswer: 1
     },
     {
         id: 6,
         question: "",
         options: ['99', '105', '115', '110'],
         image: 'images/Question6.jpg',
-        correctAnswer: 1
+        correctAnswer: 3
     },
     {
         id: 7,
         question: "",
         options: ['1595', '1379', '1437', '1617'],
         image: 'images/Question7.jpg',
-        correctAnswer: 2
+        correctAnswer: 1
     },
     {
         id: 8,
         question: "",
         options: ['1009', '1109', '1099', '1199'],
         image: 'images/Question8.jpg',
-        correctAnswer: 0
+        correctAnswer: 2
     },
     {
         id: 9,
         question: "",
         options: ['4', '6', '8', '9'],
         image: 'images/Question9.jpg',
-        correctAnswer: 3
+        correctAnswer: 1
     },
     {
         id: 10,
@@ -131,8 +131,8 @@ function showLoginScreen() {
         <div class="auth-container">
             <div class="auth-box">
                 <div class="auth-header">
-                    <img src="images/company-logo.png" alt="Company Logo" class="auth-logo">
-                    <h1 class="auth-title">Welcome to Quiz Reels! 🎯</h1>
+                    <img src="images/company-logo.png" alt="theconclusiondaily Logo" class="auth-logo">
+                    <h1 class="auth-title">Welcome to The Conclusion Daily Quiz! 🎯</h1>
                 </div>
                 <p class="auth-subtitle">Test your knowledge with our interactive quiz</p>
                 
@@ -159,8 +159,8 @@ function showRegisterScreen() {
         <div class="auth-container">
             <div class="auth-box">
                 <div class="auth-header">
-                    <img src="images/company-logo.png" alt="Company Logo" class="auth-logo">
-                    <h1 class="auth-title">Create Account 👤</h1>
+                    <img src="images/company-logo.png" alt="theconclusiondaily Logo" class="auth-logo">
+                    <h1 class="auth-title">Join The Conclusion Daily 👤</h1>
                 </div>
                 <p class="auth-subtitle">Join thousands of quiz enthusiasts</p>
                 
@@ -267,9 +267,9 @@ function register() {
 function showQuiz() {
     container.innerHTML = `
         <div class="quiz-header">
-            <div class="header-left">
-                <img src="images/company-logo.png" alt="Company Logo" class="company-logo">
-                <span class="company-name">Your Company</span>
+            <div class="header-center">
+                <img src="images/company-logo.png" alt="theconclusiondaily Logo" class="company-logo">
+                <span class="company-name">The Conclusion Daily</span>
             </div>
             <div class="user-info">
                 <span>Welcome, ${currentUser.name}!</span>
@@ -472,9 +472,9 @@ function showResults() {
         <div class="results-container">
             <div class="results-content">
                 <div class="results-header">
-                    <img src="images/company-logo.png" alt="Company Logo" class="results-logo">
+                    <img src="images/company-logo.png" alt="theconclusiondaily Logo" class="results-logo">
                     <div class="user-results-header">
-                        <div class="user-greeting">Well done, ${currentUser.name}! 🎉</div>
+                        <div class="user-greeting">The Conclusion Daily Quiz Results 🎉 ${currentUser.name}! 🎉</div>
                     </div>
                 </div>
                 <div class="results-title">Quiz Completed!</div>
