@@ -12,29 +12,54 @@ body {
     height: 100vh;
 }
 
-/* Fixed Header and Progress Bar */
+/* Enhanced Header with Larger Logo */
 .quiz-header {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
-    background: rgba(0, 0, 0, 0.9);
-    padding: 1rem;
+    background: rgba(0, 0, 0, 0.95);
+    padding: 0.5rem 1.5rem;
     z-index: 1000;
     backdrop-filter: blur(10px);
-    height: 70px;
+    height: 80px;
     display: flex;
     align-items: center;
+    justify-content: space-between;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* Larger Company Logo */
+.company-logo {
+    height: 60px;
+    width: auto;
+    border-radius: 10px;
+    object-fit: contain;
+    transition: transform 0.3s ease;
+}
+
+.company-logo:hover {
+    transform: scale(1.05);
+}
+
+.company-name {
+    color: white;
+    font-weight: bold;
+    font-size: 1.4rem;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
 }
 
 .user-info {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    gap: 1rem;
     color: white;
-    width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
 }
 
 .profile-btn, .logout-btn {
@@ -45,7 +70,6 @@ body {
     border-radius: 20px;
     cursor: pointer;
     transition: all 0.3s ease;
-    margin-left: 0.5rem;
     font-size: 0.9rem;
 }
 
@@ -53,10 +77,10 @@ body {
     background: rgba(255, 255, 255, 0.2);
 }
 
-/* Progress Bar - Fixed below header */
+/* Adjust progress bar position for larger header */
 .progress-bar {
     position: fixed;
-    top: 70px; /* Below header */
+    top: 80px;
     left: 0;
     right: 0;
     height: 4px;
@@ -71,22 +95,22 @@ body {
     width: 0%;
 }
 
-/* Main Quiz Container */
+/* Adjust main container for larger header */
 .reels-container {
     height: 100vh;
     position: relative;
-    padding-top: 74px; /* Header height + progress bar height */
+    padding-top: 84px;
     box-sizing: border-box;
 }
 
-/* Perfectly Centered Question Slides */
+/* Larger Question Images */
 .question-slide {
-    height: calc(100vh - 74px); /* Full height minus header+progress */
+    height: calc(100vh - 84px);
     display: flex;
     align-items: center;
     justify-content: center;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    padding: 20px;
+    padding: 15px;
     position: relative;
 }
 
@@ -97,9 +121,22 @@ body {
     justify-content: center;
     height: 100%;
     width: 100%;
-    max-width: 800px;
+    max-width: 900px;
     text-align: center;
-    gap: 2rem;
+    gap: 1.5rem;
+}
+
+/* Much Larger Question Images */
+.question-image {
+    max-width: 500px;
+    max-height: 350px;
+    width: auto;
+    height: auto;
+    border-radius: 15px;
+    object-fit: contain;
+    border: 3px solid white;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+    background: rgba(255, 255, 255, 0.1);
 }
 
 .question-content {
@@ -108,20 +145,7 @@ body {
     align-items: center;
     justify-content: center;
     width: 100%;
-    gap: 2rem;
-}
-
-/* Improved Image Styles */
-.question-image {
-    max-width: 400px;
-    max-height: 250px;
-    width: auto;
-    height: auto;
-    border-radius: 15px;
-    object-fit: contain;
-    border: 3px solid white;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-    background: rgba(255, 255, 255, 0.1);
+    gap: 1.5rem;
 }
 
 .question-text {
@@ -129,17 +153,18 @@ body {
     font-size: 2rem;
     font-weight: bold;
     line-height: 1.3;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-    max-width: 600px;
+    text-shadow: 2px 2px 6px rgba(0,0,0,0.6);
+    max-width: 700px;
     margin: 0;
 }
 
+/* Adjust options grid spacing */
 .options-grid {
     display: grid;
     gap: 1rem;
     grid-template-columns: 1fr 1fr;
     width: 100%;
-    max-width: 600px;
+    max-width: 650px;
     margin: 0;
 }
 
@@ -173,9 +198,19 @@ body {
     transform: scale(1.02);
 }
 
+.option-btn.correct {
+    border-color: #4CAF50;
+    background: rgba(76, 175, 80, 0.2);
+}
+
+.option-btn.wrong {
+    border-color: #FF5722;
+    background: rgba(255, 87, 34, 0.2);
+}
+
 .counter {
     position: absolute;
-    bottom: 30px;
+    bottom: 25px;
     left: 0;
     right: 0;
     text-align: center;
@@ -205,11 +240,34 @@ body {
     text-align: center;
 }
 
+/* Larger Logo in Auth Pages */
+.auth-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.auth-logo {
+    height: 100px;
+    width: auto;
+    border-radius: 15px;
+    object-fit: contain;
+    padding: 10px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
+}
+
 .auth-title {
     color: #333;
-    font-size: 2rem;
+    font-size: 2.3rem;
     margin-bottom: 0.5rem;
     font-weight: bold;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .auth-subtitle {
@@ -294,14 +352,15 @@ body {
     color: white;
 }
 
-/* Results Container */
+/* Fixed Results Container */
 .results-container {
     min-height: 100vh;
     background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
     padding: 90px 20px 20px 20px;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
+    overflow-y: auto;
 }
 
 .results-content {
@@ -312,6 +371,37 @@ body {
     max-width: 800px;
     width: 100%;
     text-align: center;
+    margin: 20px 0;
+}
+
+/* Larger Logo in Results Page */
+.results-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.results-logo {
+    height: 80px;
+    width: auto;
+    border-radius: 12px;
+    object-fit: contain;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+}
+
+.user-results-header {
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.user-greeting {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
 }
 
 .results-title {
@@ -334,15 +424,38 @@ body {
     margin-bottom: 2rem;
 }
 
+/* Make detailed results scrollable */
 .detailed-results {
     margin: 2rem 0;
     text-align: left;
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 10px;
 }
 
 .detailed-results h3 {
     color: #333;
     margin-bottom: 1rem;
     text-align: center;
+}
+
+/* Custom scrollbar for detailed results */
+.detailed-results::-webkit-scrollbar {
+    width: 8px;
+}
+
+.detailed-results::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.detailed-results::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+.detailed-results::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
 }
 
 .result-item {
@@ -394,6 +507,7 @@ body {
     gap: 1rem;
     justify-content: center;
     margin-top: 2rem;
+    flex-wrap: wrap;
 }
 
 .restart-btn, .profile-btn {
@@ -406,6 +520,7 @@ body {
     font-weight: bold;
     cursor: pointer;
     transition: all 0.3s ease;
+    min-width: 200px;
 }
 
 .restart-btn:hover, .profile-btn:hover {
@@ -551,569 +666,12 @@ body {
 /* Mobile Responsive */
 @media (max-width: 768px) {
     .quiz-header {
-        padding: 0.8rem;
-        height: 60px;
-    }
-    
-    .progress-bar {
-        top: 60px;
-    }
-    
-    .reels-container {
-        padding-top: 64px;
-    }
-    
-    .question-slide {
-        height: calc(100vh - 64px);
-        padding: 15px;
-    }
-    
-    .question-text {
-        font-size: 1.5rem;
-    }
-    
-    .options-grid {
-        grid-template-columns: 1fr;
-        gap: 0.8rem;
-        max-width: 400px;
-    }
-    
-    .option-btn {
-        padding: 1.2rem 0.8rem;
-        font-size: 1rem;
-        min-height: 70px;
-    }
-    
-    .question-image {
-        max-height: 200px;
-        max-width: 90%;
-    }
-    
-    .auth-box {
-        padding: 2rem;
-        margin: 1rem;
-    }
-    
-    .auth-title {
-        font-size: 1.7rem;
-    }
-    
-    .profile-btn, .logout-btn {
-        padding: 0.4rem 0.8rem;
-        font-size: 0.8rem;
-    }
-    
-    .results-content {
-        padding: 1.5rem;
-        margin: 1rem;
-    }
-    
-    .results-title {
-        font-size: 2rem;
-    }
-    
-    .results-score {
-        font-size: 2.5rem;
-    }
-}
-/* Fixed Results Container */
-.results-container {
-    min-height: 100vh;
-    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-    padding: 90px 20px 20px 20px;
-    display: flex;
-    align-items: flex-start; /* Changed from center to flex-start */
-    justify-content: center;
-    overflow-y: auto; /* Enable scrolling */
-}
-
-.results-content {
-    background: rgba(255, 255, 255, 0.95);
-    padding: 2.5rem;
-    border-radius: 20px;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-    max-width: 800px;
-    width: 100%;
-    text-align: center;
-    margin: 20px 0; /* Add margin for better spacing */
-}
-
-/* Make detailed results scrollable */
-.detailed-results {
-    margin: 2rem 0;
-    text-align: left;
-    max-height: 400px; /* Limit height */
-    overflow-y: auto; /* Enable scrolling */
-    padding-right: 10px; /* Space for scrollbar */
-}
-
-/* Custom scrollbar for detailed results */
-.detailed-results::-webkit-scrollbar {
-    width: 8px;
-}
-
-.detailed-results::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 4px;
-}
-
-.detailed-results::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 4px;
-}
-
-.detailed-results::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
-}
-
-/* Ensure body allows scrolling */
-body.results-page {
-    overflow-y: auto;
-    height: auto;
-}
-
-/* Alternative: Make entire results page scrollable */
-.scrollable-results {
-    min-height: auto;
-    height: auto;
-    align-items: flex-start;
-    padding-bottom: 40px;
-}
-
-/* Mobile responsive fixes */
-@media (max-width: 768px) {
-    .results-container {
-        padding: 80px 15px 15px 15px;
-        align-items: flex-start;
-    }
-    
-    .results-content {
-        padding: 1.5rem;
-        margin: 10px 0;
-    }
-    
-    .detailed-results {
-        max-height: 300px;
-    }
-    
-    .results-actions {
-        flex-direction: column;
-        gap: 0.8rem;
-    }
-    
-    .restart-btn, .profile-btn {
-        width: 100%;
-    }
-}
-/* Company Logo Styles */
-.header-left {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.company-logo {
-    height: 40px;
-    width: auto;
-    border-radius: 5px;
-}
-
-.company-name {
-    color: white;
-    font-weight: bold;
-    font-size: 1.2rem;
-}
-
-/* Update header layout */
-.quiz-header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    background: rgba(0, 0, 0, 0.9);
-    padding: 1rem;
-    z-index: 1000;
-    backdrop-filter: blur(10px);
-    height: 70px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between; /* Changed to space-between */
-}
-
-.user-info {
-    display: flex;
-    align-items: center;
-    color: white;
-    gap: 0.5rem;
-}
-/* Results Logo Styles */
-.results-header {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-}
-
-.results-logo {
-    height: 50px;
-    width: auto;
-    border-radius: 6px;
-}
-/* Complete Logo Styles for All Pages */
-.company-logo {
-    height: 40px;
-    width: auto;
-    border-radius: 5px;
-    object-fit: contain;
-}
-
-.auth-logo {
-    height: 60px;
-    width: auto;
-    border-radius: 8px;
-    object-fit: contain;
-    margin-bottom: 0.5rem;
-}
-
-.results-logo {
-    height: 50px;
-    width: auto;
-    border-radius: 6px;
-    object-fit: contain;
-}
-
-.profile-logo {
-    height: 70px;
-    width: auto;
-    border-radius: 10px;
-    object-fit: contain;
-    margin-bottom: 1rem;
-}
-
-/* Mobile responsive logos */
-@media (max-width: 768px) {
-    .company-logo {
-        height: 35px;
-    }
-    
-    .auth-logo {
-        height: 50px;
-    }
-    
-    .results-logo {
-        height: 45px;
-    }
-    
-    .company-name {
-        font-size: 1rem;
-    }
-    
-    .header-left {
-        gap: 0.5rem;
-    }
-}/* Option 1: Logo on left, user info on right */
-.quiz-header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    background: rgba(0, 0, 0, 0.95);
-    padding: 0.8rem 1.5rem;
-    z-index: 1000;
-    backdrop-filter: blur(10px);
-    height: 70px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
-}
-
-.header-left {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.company-logo {
-    height: 45px; /* Adjust size here */
-    width: auto;
-    border-radius: 8px;
-    object-fit: contain;
-    transition: transform 0.3s ease;
-}
-
-.company-logo:hover {
-    transform: scale(1.05);
-}
-
-.company-name {
-    color: white;
-    font-weight: bold;
-    font-size: 1.3rem;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-}
-
-.user-info {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    color: white;
-}
-/* Option 2: Centered Logo */
-.quiz-header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    background: rgba(0, 0, 0, 0.95);
-    padding: 0.8rem 1.5rem;
-    z-index: 1000;
-    backdrop-filter: blur(10px);
-    height: 70px;
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    align-items: center;
-    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
-}
-
-.header-center {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-}
-
-.company-logo {
-    height: 50px; /* Larger for center position */
-    width: auto;
-    border-radius: 10px;
-    object-fit: contain;
-}
-
-.company-name {
-    color: white;
-    font-weight: bold;
-    font-size: 1.4rem;
-    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
-}
-
-.user-info {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 1rem;
-    color: white;
-}
-/* Option 3: Logo with background */
-.company-logo {
-    height: 50px;
-    width: auto;
-    border-radius: 12px;
-    object-fit: contain;
-    padding: 5px;
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-}
-
-.company-name {
-    color: white;
-    font-weight: bold;
-    font-size: 1.3rem;
-    background: linear-gradient(45deg, #FFD700, #FFA000);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-}
-.company-name {
-    color: white;
-    font-weight: bold;
-    font-size: 1.3rem;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-    
-    /* Gradient Text Effect */
-    background: linear-gradient(45deg, #FFD700, #FFA000);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-/* Or solid color */
-.company-name {
-    color: #FFD700; /* Gold color */
-    font-weight: bold;
-    font-size: 1.3rem;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-}/* Enhanced Header with Larger Logo */
-.quiz-header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    background: rgba(0, 0, 0, 0.95);
-    padding: 0.5rem 1.5rem; /* Reduced padding */
-    z-index: 1000;
-    backdrop-filter: blur(10px);
-    height: 80px; /* Increased height for larger logo */
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
-}
-
-.header-left {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-/* Larger Company Logo */
-.company-logo {
-    height: 60px; /* Increased from 40-45px to 60px */
-    width: auto;
-    border-radius: 10px;
-    object-fit: contain;
-    transition: transform 0.3s ease;
-}
-
-.company-logo:hover {
-    transform: scale(1.05);
-}
-
-.company-name {
-    color: white;
-    font-weight: bold;
-    font-size: 1.4rem;
-    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
-}
-
-/* Adjust progress bar position for larger header */
-.progress-bar {
-    position: fixed;
-    top: 80px; /* Increased to match larger header */
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: rgba(255, 255, 255, 0.2);
-    z-index: 999;
-}
-
-/* Adjust main container for larger header */
-.reels-container {
-    height: 100vh;
-    position: relative;
-    padding-top: 84px; /* Increased for larger header + progress bar */
-    box-sizing: border-box;
-}
-
-/* Larger Question Images */
-.question-slide {
-    height: calc(100vh - 84px); /* Adjusted for larger header */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    padding: 15px;
-    position: relative;
-}
-
-.question-wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    width: 100%;
-    max-width: 900px; /* Slightly increased */
-    text-align: center;
-    gap: 1.5rem; /* Reduced gap to make space for larger images */
-}
-
-/* Much Larger Question Images */
-.question-image {
-    max-width: 500px; /* Increased from 400px */
-    max-height: 350px; /* Increased from 250px */
-    width: auto;
-    height: auto;
-    border-radius: 15px;
-    object-fit: contain;
-    border: 3px solid white;
-    box-shadow: 0 12px 40px rgba(0,0,0,0.4); /* Enhanced shadow */
-    background: rgba(255, 255, 255, 0.1);
-}
-
-.question-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    gap: 1.5rem; /* Reduced gap */
-}
-
-.question-text {
-    color: white;
-    font-size: 2rem;
-    font-weight: bold;
-    line-height: 1.3;
-    text-shadow: 2px 2px 6px rgba(0,0,0,0.6);
-    max-width: 700px;
-    margin: 0;
-}
-
-/* Adjust options grid spacing */
-.options-grid {
-    display: grid;
-    gap: 1rem;
-    grid-template-columns: 1fr 1fr;
-    width: 100%;
-    max-width: 650px; /* Slightly increased */
-    margin: 0;
-}
-
-.option-btn {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    color: white;
-    padding: 1.5rem 1rem;
-    border-radius: 15px;
-    font-size: 1.2rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-weight: bold;
-    min-height: 80px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    word-break: break-word;
-}
-
-.counter {
-    position: absolute;
-    bottom: 25px;
-    left: 0;
-    right: 0;
-    text-align: center;
-    color: white;
-    font-size: 1.1rem;
-    opacity: 0.8;
-    font-weight: bold;
-}
-
-/* Mobile Responsive for Larger Elements */
-@media (max-width: 768px) {
-    .quiz-header {
         height: 70px;
         padding: 0.5rem 1rem;
     }
     
     .company-logo {
-        height: 50px; /* Still larger than before on mobile */
+        height: 50px;
     }
     
     .progress-bar {
@@ -1131,7 +689,7 @@ body.results-page {
     
     .question-image {
         max-width: 90%;
-        max-height: 280px; /* Still large on mobile */
+        max-height: 280px;
     }
     
     .question-text {
@@ -1145,6 +703,54 @@ body.results-page {
     
     .company-name {
         font-size: 1.2rem;
+    }
+    
+    .profile-btn, .logout-btn {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
+    }
+    
+    .auth-box {
+        padding: 2rem;
+        margin: 1rem;
+    }
+    
+    .auth-title {
+        font-size: 1.7rem;
+    }
+    
+    .auth-logo {
+        height: 80px;
+    }
+    
+    .results-container {
+        padding: 80px 15px 15px 15px;
+    }
+    
+    .results-content {
+        padding: 1.5rem;
+        margin: 10px 0;
+    }
+    
+    .detailed-results {
+        max-height: 300px;
+    }
+    
+    .results-title {
+        font-size: 2rem;
+    }
+    
+    .results-score {
+        font-size: 2.5rem;
+    }
+    
+    .results-actions {
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+    
+    .restart-btn, .profile-btn {
+        width: 100%;
     }
 }
 
@@ -1181,101 +787,20 @@ body.results-page {
     .company-name {
         font-size: 1.1rem;
     }
-}
-/* Larger Logo in Auth Pages */
-.auth-header {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1.5rem;
-    margin-bottom: 1.5rem;
-}
-
-.auth-logo {
-    height: 100px; /* Much larger for auth pages */
-    width: auto;
-    border-radius: 15px;
-    object-fit: contain;
-    padding: 10px;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
-}
-
-.auth-title {
-    color: #333;
-    font-size: 2.3rem;
-    margin-bottom: 0;
-    font-weight: bold;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-/* Larger Logo in Results Page */
-.results-header {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-}
-
-.results-logo {
-    height: 80px; /* Larger for results page */
-    width: auto;
-    border-radius: 12px;
-    object-fit: contain;
-    padding: 8px;
-    background: rgba(255, 255, 255, 0.1);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
-}
-/* Ultra-Compact Layout for Maximum Image Space */
-.question-wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-between; /* Distribute space evenly */
-    height: 100%;
-    width: 100%;
-    max-width: 900px;
-    text-align: center;
-    gap: 1rem; /* Minimal gap */
-}
-
-.question-image {
-    max-width: 550px; /* Even larger */
-    max-height: 400px; /* Even larger */
-    width: auto;
-    height: auto;
-    border-radius: 15px;
-    object-fit: contain;
-    border: 4px solid white;
-    box-shadow: 0 15px 50px rgba(0,0,0,0.5);
-    background: rgba(255, 255, 255, 0.1);
-    flex-shrink: 0; /* Prevent image from shrinking */
-}
-
-.question-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    gap: 1rem; /* Minimal gap */
-    flex: 1; /* Take available space */
-}
-
-.question-text {
-    color: white;
-    font-size: 1.8rem; /* Slightly smaller to save space */
-    font-weight: bold;
-    line-height: 1.2;
-    text-shadow: 2px 2px 6px rgba(0,0,0,0.6);
-    max-width: 700px;
-    margin: 0;
-    min-height: 60px; /* Ensure consistent height */
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    
+    .user-info span {
+        display: none;
+    }
+    
+    .auth-logo {
+        height: 70px;
+    }
+    
+    .auth-title {
+        font-size: 1.5rem;
+    }
+    
+    .results-logo {
+        height: 60px;
+    }
 }
