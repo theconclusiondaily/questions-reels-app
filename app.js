@@ -73,9 +73,11 @@ const questions = [
 ];
 
 let currentQuestion = 0;
-let userAnswers = [];
+let userAnswers = new Array(questions.length).fill(null);
 let score = 0;
 let currentUser = null;
+let quizTimer = null;
+let timeLeft = 1800; // 30 minutes in seconds
 const container = document.getElementById('root');
 
 // User Management Functions
@@ -97,12 +99,15 @@ function setCurrentUser(user) {
 }
 
 function logout() {
+    if (quizTimer) {
+        clearInterval(quizTimer);
+    }
     localStorage.removeItem('currentUser');
     currentUser = null;
     showLoginScreen();
 }
 
-function saveUserResult(score, total) {
+function saveUserResult(score, total, timeUsed) {
     if (!currentUser) return;
     
     const users = getUsers();
@@ -117,16 +122,38 @@ function saveUserResult(score, total) {
             score: score,
             total: total,
             percentage: Math.round((score / total) * 100),
+            timeUsed: timeUsed,
             date: new Date().toLocaleDateString(),
-            time: new Date().toLocaleTimeString()
+            time: new Date().toLocaleTimeString(),
+            timestamp: new Date().toISOString()
         });
         
         saveUsers(users);
         
-        // Update currentUser with the new results
-        currentUser = users[userIndex];
-        setCurrentUser(currentUser);
+        // Store individual attempt data separately
+        storeIndividualAttempt(users[userIndex], score, total, timeUsed);
     }
+}
+
+// Store individual attempt data separately
+function storeIndividualAttempt(user, score, total, timeUsed) {
+    const attemptData = {
+        userId: user.email,
+        userName: user.name,
+        userMobile: user.mobile,
+        score: score,
+        total: total,
+        percentage: Math.round((score / total) * 100),
+        timeUsed: timeUsed,
+        date: new Date().toLocaleDateString(),
+        time: new Date().toLocaleTimeString(),
+        timestamp: new Date().toISOString(),
+        answers: userAnswers
+    };
+    
+    const allAttempts = JSON.parse(localStorage.getItem('quizAttempts')) || [];
+    allAttempts.push(attemptData);
+    localStorage.setItem('quizAttempts', JSON.stringify(allAttempts));
 }
 
 // Check if user has already attempted the quiz
@@ -139,6 +166,51 @@ function hasUserAttemptedQuiz() {
     return user && user.quizResults && user.quizResults.length > 0;
 }
 
+// Timer Functions
+function startTimer() {
+    const startTime = Date.now();
+    const timerDisplay = document.getElementById('timerDisplay');
+    
+    quizTimer = setInterval(() => {
+        const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+        const remainingTime = timeLeft - elapsedSeconds;
+        
+        if (remainingTime <= 0) {
+            clearInterval(quizTimer);
+            autoSubmitQuiz();
+            return;
+        }
+        
+        const minutes = Math.floor(remainingTime / 60);
+        const seconds = remainingTime % 60;
+        
+        if (timerDisplay) {
+            timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Change color when less than 5 minutes
+            if (remainingTime < 300) {
+                timerDisplay.style.color = '#ff4444';
+                timerDisplay.classList.add('pulse');
+            } else if (remainingTime < 600) {
+                timerDisplay.style.color = '#ffaa00';
+            }
+        }
+    }, 1000);
+}
+
+function autoSubmitQuiz() {
+    // Calculate score for answered questions
+    score = 0;
+    for (let i = 0; i < questions.length; i++) {
+        if (userAnswers[i] !== null && userAnswers[i] === questions[i].correctAnswer) {
+            score++;
+        }
+    }
+    
+    const timeUsed = timeLeft; // All time used when auto-submitted
+    saveUserResult(score, questions.length, timeUsed);
+    showSubmissionPage(timeUsed);
+}
 // Authentication Screens
 function showLoginScreen() {
     container.innerHTML = `
@@ -225,118 +297,16 @@ function login() {
     }
 }
 
-function register() {
-    const name = document.getElementById('registerName').value;
-    const email = document.getElementById('registerEmail').value;
-    const mobile = document.getElementById('registerMobile').value;
-    const password = document.getElementById('registerPassword').value;
-    const confirm = document.getElementById('registerConfirm').value;
-    
-    if (!name || !email || !mobile || !password || !confirm) {
-        alert('Please fill all fields');
-        return;
-    }
-    
-    // Mobile number validation
-    const mobileRegex = /^[0-9]{10}$/;
-    if (!mobileRegex.test(mobile)) {
-        alert('Please enter a valid 10-digit mobile number');
-        return;
-    }
-    
-    if (password !== confirm) {
-        alert('Passwords do not match');
-        return;
-    }
-    
-    if (password.length < 6) {
-        alert('Password must be at least 6 characters');
-        return;
-    }
-    
-    const users = getUsers();
-    
-    if (users.find(u => u.email === email)) {
-        alert('Email already registered');
-        return;
-    }
-    
-    // Check if mobile number already exists
-    if (users.find(u => u.mobile === mobile)) {
-        alert('Mobile number already registered');
-        return;
-    }
-    
-    const newUser = {
-        id: Date.now(),
-        name: name,
-        email: email,
-        mobile: mobile,
-        password: password,
-        registeredAt: new Date().toLocaleDateString(),
-        quizResults: []
-    };
-    
-    users.push(newUser);
-    saveUsers(users);
-    setCurrentUser(newUser);
-    showQuiz();
-}
-
-// Screen for users who have already attempted the quiz
-function showAlreadyAttemptedScreen() {
-    const userResults = currentUser.quizResults[0]; // Get first attempt
-    
-    container.innerHTML = `
-        <div class="results-container">
-            <div class="results-content">
-                <div class="results-header">
-                    <img src="images/company-logo.png" alt="Company Logo" class="results-logo">
-                    <div class="user-results-header">
-                        <div class="user-greeting">Welcome back, ${currentUser.name}! 👋</div>
-                    </div>
-                </div>
-                
-                <div class="attempted-message">
-                    <div class="attempted-icon">✅</div>
-                    <h2 class="attempted-title">Quiz Already Attempted</h2>
-                    <p class="attempted-text">
-                        You have already completed this quiz. Each user is allowed only one attempt 
-                        to maintain fairness for all participants.
-                    </p>
-                    
-                    <div class="previous-result">
-                        <h3>Your Previous Result:</h3>
-                        <div class="result-summary">
-                            <div class="score-display">
-                                <span class="score">${userResults.score}/${questions.length}</span>
-                                <span class="percentage">(${userResults.percentage}%)</span>
-                            </div>
-                            <div class="attempt-date">Attempted on: ${userResults.date} at ${userResults.time}</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="results-actions">
-                    <button class="profile-btn" onclick="showProfile()">View Detailed Profile</button>
-                    <button class="logout-btn" onclick="logout()">Logout</button>
-                </div>
-            </div>
-        </div>
-    `;
-}
-
-// Quiz Functions
-function showQuiz()
-    {
-    // Safety check - prevent quiz if user already attempted
+// Updated Quiz Screen with Timer and Navigation Buttons
+function showQuiz() {
     if (hasUserAttemptedQuiz()) {
         showAlreadyAttemptedScreen();
         return;
     }
+    
     // Reset quiz state
     currentQuestion = 0;
-    userAnswers = [];
+    userAnswers = new Array(questions.length).fill(null);
     score = 0;
     
     container.innerHTML = `
@@ -345,9 +315,14 @@ function showQuiz()
                 <img src="images/company-logo.png" alt="The Conclusion Daily Logo" class="company-logo">
                 <span class="company-name">The Conclusion Daily</span>
             </div>
+            <div class="header-center">
+                <div class="timer-container">
+                    <span class="timer-label">Time Left:</span>
+                    <span id="timerDisplay" class="timer">30:00</span>
+                </div>
+            </div>
             <div class="user-info">
                 <span>Welcome, ${currentUser.name}!</span>
-                <button onclick="showProfile()" class="profile-btn">Profile</button>
                 <button onclick="logout()" class="logout-btn">Logout</button>
             </div>
         </div>
@@ -357,10 +332,15 @@ function showQuiz()
         <div class="reels-container">
             ${questions.map((q, index) => `
                 <div class="question-slide" id="slide-${index}" style="display: ${index === 0 ? 'flex' : 'none'}">
+                    <div class="watermark"></div>
                     <div class="question-wrapper">
-                        ${q.image ? `<img src="${q.image}" alt="Question image" class="question-image" onerror="this.style.display='none'">` : ''}
+                        ${q.image ? `
+                            <div class="image-container">
+                                <img src="${q.image}" alt="Question ${index + 1}" class="question-image">
+                            </div>
+                        ` : ''}
                         <div class="question-content">
-                            <h2 class="question-text">${q.question}</h2>
+                            <h2 class="question-text">${q.question || `Question ${index + 1}`}</h2>
                             <div class="options-grid">
                                 ${q.options.map((option, optIndex) => `
                                     <button class="option-btn" onclick="selectOption(${index}, ${optIndex})">
@@ -369,27 +349,164 @@ function showQuiz()
                                 `).join('')}
                             </div>
                         </div>
-                        <div class="counter">${index + 1} / ${questions.length}</div>
+                        <div class="navigation-buttons">
+                            <button class="nav-btn prev-btn" onclick="navigateToQuestion(${index - 1})" ${index === 0 ? 'disabled' : ''}>
+                                ← Previous
+                            </button>
+                            <div class="counter">${index + 1} / ${questions.length}</div>
+                            <button class="nav-btn next-btn" onclick="navigateToQuestion(${index + 1})" ${index === questions.length - 1 ? 'disabled' : ''}>
+                                Next →
+                            </button>
+                        </div>
+                        ${index === questions.length - 1 ? `
+                            <button class="submit-btn" onclick="submitQuiz()">Submit Quiz</button>
+                        ` : ''}
                     </div>
                 </div>
             `).join('')}
         </div>
-        <div class="swipe-hint">⬆️ Swipe up/down to navigate ⬇️</div>
     `;
     
     updateProgressBar();
-    setupSwipeGestures();
+    startTimer();
 }
 
+function navigateToQuestion(index) {
+    if (index >= 0 && index < questions.length) {
+        showQuestion(index);
+    }
+}
+
+function showQuestion(index) {
+    // Hide all slides
+    const slides = document.querySelectorAll('.question-slide');
+    slides.forEach((slide, i) => {
+        slide.style.display = 'none';
+    });
+    
+    // Show current slide
+    const currentSlide = document.getElementById(`slide-${index}`);
+    if (currentSlide) {
+        currentSlide.style.display = 'flex';
+    }
+    
+    currentQuestion = index;
+    updateProgressBar();
+}
+
+function selectOption(questionIndex, optionIndex) {
+    const buttons = document.querySelectorAll(`#slide-${questionIndex} .option-btn`);
+    
+    // Remove all selections
+    buttons.forEach(btn => {
+        btn.classList.remove('selected');
+    });
+    
+    // Add selected class to chosen option
+    if (buttons[optionIndex]) {
+        buttons[optionIndex].classList.add('selected');
+    }
+    
+    // Store user answer (don't show correct/wrong during quiz)
+    userAnswers[questionIndex] = optionIndex;
+    
+    // Auto-move to next question after 1 second
+    setTimeout(() => {
+        if (questionIndex < questions.length - 1) {
+            showQuestion(questionIndex + 1);
+        }
+    }, 1000);
+}
+
+function updateProgressBar() {
+    const progress = (currentQuestion / (questions.length - 1)) * 100;
+    const progressElement = document.querySelector('.progress');
+    if (progressElement) {
+        progressElement.style.width = progress + '%';
+    }
+}
+
+function submitQuiz() {
+    if (quizTimer) {
+        clearInterval(quizTimer);
+    }
+    
+    // Calculate final score
+    score = 0;
+    for (let i = 0; i < questions.length; i++) {
+        if (userAnswers[i] !== null && userAnswers[i] === questions[i].correctAnswer) {
+            score++;
+        }
+    }
+    
+    // Calculate time used
+    const timerDisplay = document.getElementById('timerDisplay');
+    const timeText = timerDisplay ? timerDisplay.textContent : '30:00';
+    const [minutes, seconds] = timeText.split(':').map(Number);
+    const timeUsed = timeLeft - (minutes * 60 + seconds);
+    
+    saveUserResult(score, questions.length, timeUsed);
+    showSubmissionPage(timeUsed);
+}
+
+function showSubmissionPage(timeUsed) {
+    const percentage = Math.round((score / questions.length) * 100);
+    const timeMinutes = Math.floor(timeUsed / 60);
+    const timeSeconds = timeUsed % 60;
+    
+    container.innerHTML = `
+        <div class="submission-container">
+            <div class="submission-content">
+                <div class="submission-header">
+                    <img src="images/company-logo.png" alt="Company Logo" class="submission-logo">
+                    <h1>Thank You! 🙏</h1>
+                </div>
+                
+                <div class="submission-message">
+                    <div class="submission-icon">📝</div>
+                    <h2>Quiz Submitted Successfully</h2>
+                    <p>Your answers have been recorded. Results will be announced later.</p>
+                </div>
+                
+                <div class="submission-details">
+                    <div class="detail-card">
+                        <div class="detail-label">Questions Attempted</div>
+                        <div class="detail-value">${userAnswers.filter(answer => answer !== null).length}/${questions.length}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-label">Time Taken</div>
+                        <div class="detail-value">${timeMinutes}m ${timeSeconds}s</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-label">Submission Time</div>
+                        <div class="detail-value">${new Date().toLocaleTimeString()}</div>
+                    </div>
+                </div>
+                
+                <div class="one-time-message">
+                    <div class="message-icon">🎯</div>
+                    <p class="message-text">
+                        <strong>One Attempt Only:</strong> This was your one and only attempt at this quiz. 
+                        Thank you for participating!
+                    </p>
+                </div>
+                
+                <div class="submission-actions">
+                    <button class="profile-btn" onclick="showProfile()">View Profile</button>
+                    <button class="logout-btn" onclick="logout()">Logout</button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// Profile function (updated)
 function showProfile() {
     const user = currentUser;
-    const users = getUsers(); // Get updated users data
+    const users = getUsers();
     const currentUserData = users.find(u => u.email === user.email);
     const results = currentUserData?.quizResults || [];
-    const bestScore = results.length > 0 ? Math.max(...results.map(r => r.percentage)) : 0;
     const totalAttempts = results.length;
-    
-    // Check if user has attempted the quiz
     const hasAttempted = totalAttempts > 0;
 
     container.innerHTML = `
@@ -423,30 +540,12 @@ function showProfile() {
             </div>
             
             ${hasAttempted ? `
-                <div class="stats-container">
-                    <h2>Quiz Statistics 📊</h2>
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-value">${totalAttempts}</div>
-                            <div class="stat-label">Total Attempts</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value">${bestScore}%</div>
-                            <div class="stat-label">Best Score</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value">${questions.length}</div>
-                            <div class="stat-label">Questions</div>
-                        </div>
-                    </div>
-                </div>
-                
                 <div class="attempts-history">
                     <h3>Your Quiz Attempt</h3>
                     ${results.map(result => `
                         <div class="attempt-item">
-                            <div class="attempt-score">${result.score}/${result.total} (${result.percentage}%)</div>
-                            <div class="attempt-date">${result.date} ${result.time}</div>
+                            <div class="attempt-score">Submitted on ${result.date}</div>
+                            <div class="attempt-date">Time taken: ${Math.floor(result.timeUsed / 60)}m ${result.timeUsed % 60}s</div>
                         </div>
                     `).join('')}
                 </div>
@@ -466,202 +565,12 @@ function showProfile() {
     `;
 }
 
-function showQuestion(index) {
-    console.log('🔄 showQuestion called with index:', index);
-    
-    if (index < 0 || index >= questions.length) {
-        console.log('❌ Invalid index');
-        return;
-    }
-    
-    // Hide all slides
-    const slides = document.querySelectorAll('.question-slide');
-    console.log('📊 Total slides found:', slides.length);
-    
-    slides.forEach((slide, i) => {
-        slide.style.display = 'none';
-    });
-    
-    // Show current slide
-    const currentSlide = document.getElementById(`slide-${index}`);
-    if (currentSlide) {
-        currentSlide.style.display = 'flex';
-        console.log('🎯 Now showing slide', index);
-    } else {
-        console.error('❌ Slide not found: slide-' + index);
-    }
-    
-    currentQuestion = index;
-    updateProgressBar();
-}
-
-function selectOption(questionIndex, optionIndex) {
-    console.log('🎯 selectOption called:', questionIndex, optionIndex);
-    
-    const question = questions[questionIndex];
-    const buttons = document.querySelectorAll(`#slide-${questionIndex} .option-btn`);
-    console.log('🔘 Buttons found:', buttons.length);
-    
-    // Remove all selections
-    buttons.forEach(btn => {
-        btn.classList.remove('selected', 'correct', 'wrong');
-    });
-    
-    // Add selected class
-    if (buttons[optionIndex]) {
-        buttons[optionIndex].classList.add('selected');
-        console.log('✅ Added selected class to button', optionIndex);
-    }
-    
-    // Store user answer
-    userAnswers[questionIndex] = optionIndex;
-    console.log('📝 User answers:', userAnswers);
-    
-    // Show correct/wrong with colors
-    setTimeout(() => {
-        if (buttons[question.correctAnswer]) {
-            buttons[question.correctAnswer].classList.add('correct');
-        }
-        if (optionIndex !== question.correctAnswer && buttons[optionIndex]) {
-            buttons[optionIndex].classList.add('wrong');
-        }
-        
-        // Calculate score
-        if (optionIndex === question.correctAnswer) {
-            score++;
-        }
-    }, 500);
-    
-    // Auto move to next question after 2 seconds
-    setTimeout(() => {
-        if (questionIndex < questions.length - 1) {
-            console.log('➡️ Moving to next question:', questionIndex + 1);
-            showQuestion(questionIndex + 1);
-        } else {
-            console.log('🏁 Quiz completed!');
-            showResults();
-        }
-    }, 2000);
-}
-
-function updateProgressBar() {
-    const progress = (currentQuestion / (questions.length - 1)) * 100;
-    const progressElement = document.querySelector('.progress');
-    if (progressElement) {
-        progressElement.style.width = progress + '%';
-    }
-}
-
-function setupSwipeGestures() {
-    let startY = 0;
-    let endY = 0;
-    
-    container.addEventListener('touchstart', (e) => {
-        startY = e.touches[0].clientY;
-    });
-    
-    container.addEventListener('touchend', (e) => {
-        endY = e.changedTouches[0].clientY;
-        handleSwipe();
-    });
-    
-    function handleSwipe() {
-        const diff = startY - endY;
-        
-        if (diff > 50 && currentQuestion < questions.length - 1) {
-            // Swipe up - next question
-            showQuestion(currentQuestion + 1);
-        } else if (diff < -50 && currentQuestion > 0) {
-            // Swipe down - previous question
-            showQuestion(currentQuestion - 1);
-        }
-    }
-    
-    // Mouse wheel for desktop
-    document.addEventListener('wheel', (e) => {
-        e.preventDefault();
-        if (e.deltaY > 50 && currentQuestion < questions.length - 1) {
-            showQuestion(currentQuestion + 1);
-        } else if (e.deltaY < -50 && currentQuestion > 0) {
-            showQuestion(currentQuestion - 1);
-        }
-    }, { passive: false });
-}
-
-function showResults() {
-    // Calculate score
-    score = 0;
-    for (let i = 0; i < questions.length; i++) {
-        if (userAnswers[i] === questions[i].correctAnswer) {
-            score++;
-        }
-    }
-    
-    const percentage = Math.round((score / questions.length) * 100);
-    
-    // Save result for registered users (this is their first and only attempt)
-    saveUserResult(score, questions.length);
-    
-    // Build results HTML first
-    let resultsHTML = `
-        <div class="results-container">
-            <div class="results-content">
-                <div class="results-header">
-                    <img src="images/company-logo.png" alt="Company Logo" class="results-logo">
-                    <div class="user-results-header">
-                        <div class="user-greeting">Well done, ${currentUser.name}! 🎉</div>
-                    </div>
-                </div>
-                <div class="results-title">Quiz Completed!</div>
-                <div class="results-score">${score}/${questions.length}</div>
-                <div class="results-percentage">${percentage}% Correct</div>
-                
-                <div class="one-time-message">
-                    <div class="message-icon">🎯</div>
-                    <p class="message-text">
-                        <strong>One Attempt Only:</strong> This was your one and only attempt at this quiz. 
-                        Thank you for participating!
-                    </p>
-                </div>
-                
-                <div class="detailed-results">
-                    <h3>Detailed Results:</h3>
-    `;
-    
-    // Add each question with correct answer
-    questions.forEach((question, index) => {
-        const userAnswer = userAnswers[index];
-        const isCorrect = userAnswer === question.correctAnswer;
-        
-        resultsHTML += `
-            <div class="result-item ${isCorrect ? 'correct' : 'incorrect'}">
-                <div class="result-question">Q${index + 1}: ${question.question || 'Question ' + (index + 1)}</div>
-                <div class="result-answer">
-                    <span class="user-answer">Your answer: ${question.options[userAnswer] || 'Not answered'}</span>
-                    <span class="correct-answer">Correct answer: ${question.options[question.correctAnswer]}</span>
-                </div>
-                <div class="result-status">${isCorrect ? '✅ Correct' : '❌ Incorrect'}</div>
-            </div>
-        `;
-    });
-    
-    resultsHTML += `
-                </div>
-                <div class="results-actions">
-                    <button class="profile-btn" onclick="showProfile()">View Profile</button>
-                    <button class="logout-btn" onclick="logout()">Logout</button>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    container.innerHTML = resultsHTML;
-}
-
 // Make functions globally available
 window.showQuiz = showQuiz;
 window.showQuestion = showQuestion;
 window.selectOption = selectOption;
+window.navigateToQuestion = navigateToQuestion;
+window.submitQuiz = submitQuiz;
 window.showProfile = showProfile;
 window.logout = logout;
 window.showLoginScreen = showLoginScreen;
@@ -672,16 +581,13 @@ window.showAlreadyAttemptedScreen = showAlreadyAttemptedScreen;
 
 // Initialize app
 function initApp() {
-    console.log('🚀 App starting...');
     const user = getCurrentUser();
     if (user) {
         currentUser = user;
         
-        // Get fresh user data from storage
         const users = getUsers();
         const currentUserData = users.find(u => u.email === user.email);
         
-        // Check if user has already attempted the quiz using fresh data
         if (currentUserData?.quizResults && currentUserData.quizResults.length > 0) {
             showAlreadyAttemptedScreen();
         } else {

@@ -955,3 +955,246 @@ body {
     max-height: 600px; /* Increased from 500px */
     /* keep the rest of your existing styles */
 }
+/* Timer Styles */
+.header-center {
+    display: flex;
+    align-items: center;
+}
+
+.timer-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.timer-label {
+    color: white;
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.timer {
+    color: #4CAF50;
+    font-size: 1.2rem;
+    font-weight: bold;
+    font-family: 'Courier New', monospace;
+}
+
+.timer.pulse {
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* Navigation Buttons */
+.navigation-buttons {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    max-width: 800px;
+    margin-top: 1rem;
+    gap: 1rem;
+}
+
+.nav-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 0.8rem 1.5rem;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+    min-width: 120px;
+}
+
+.nav-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.nav-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.prev-btn {
+    order: 1;
+}
+
+.next-btn {
+    order: 3;
+}
+
+.navigation-buttons .counter {
+    position: static;
+    order: 2;
+    color: white;
+    font-weight: bold;
+}
+
+/* Submit Button */
+.submit-btn {
+    background: linear-gradient(135deg, #4CAF50, #45a049);
+    color: white;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 25px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 1rem;
+    width: 200px;
+}
+
+.submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(76, 175, 80, 0.3);
+}
+
+/* Watermark */
+.watermark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0.03;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.watermark::after {
+    content: '';
+    position: absolute;
+    width: 400px;
+    height: 400px;
+    background-image: url('images/company-logo.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+/* Submission Page */
+.submission-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 90px 20px 20px 20px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+}
+
+.submission-content {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 2.5rem;
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    max-width: 600px;
+    width: 100%;
+    text-align: center;
+}
+
+.submission-header {
+    margin-bottom: 2rem;
+}
+
+.submission-logo {
+    height: 80px;
+    width: auto;
+    margin-bottom: 1rem;
+}
+
+.submission-message {
+    margin: 2rem 0;
+}
+
+.submission-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.submission-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin: 2rem 0;
+}
+
+.detail-card {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 10px;
+    border-left: 4px solid #667eea;
+}
+
+.detail-label {
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.detail-value {
+    color: #333;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.submission-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+}
+
+/* Remove swipe hint since we have buttons */
+.swipe-hint {
+    display: none;
+}
+
+/* Mobile Responsive Updates */
+@media (max-width: 768px) {
+    .timer-container {
+        padding: 0.4rem 0.8rem;
+    }
+    
+    .timer-label {
+        font-size: 0.8rem;
+    }
+    
+    .timer {
+        font-size: 1rem;
+    }
+    
+    .navigation-buttons {
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+    
+    .nav-btn {
+        width: 100%;
+        order: unset !important;
+    }
+    
+    .navigation-buttons .counter {
+        order: unset;
+    }
+    
+    .watermark::after {
+        width: 300px;
+        height: 300px;
+    }
+    
+    .submission-details {
+        grid-template-columns: 1fr;
+    }
+}
