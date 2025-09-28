@@ -131,8 +131,8 @@ function showLoginScreen() {
         <div class="auth-container">
             <div class="auth-box">
                 <div class="auth-header">
-                    <img src="images/company-logo.png" alt="Company Logo" class="auth-logo">
-                    <h1 class="auth-title">Welcome to Quiz Reels! 🎯</h1>
+                    <img src="images/company-logo.png" alt="The Conclusion Daily Logo" class="auth-logo">
+                    <h1 class="auth-title">Welcome to The Conclusion Daily! 🎯</h1>
                 </div>
                 <p class="auth-subtitle">Test your knowledge with our interactive quiz</p>
                 
@@ -265,11 +265,16 @@ function register() {
 
 // Quiz Functions
 function showQuiz() {
+    // Reset quiz state
+    currentQuestion = 0;
+    userAnswers = [];
+    score = 0;
+    
     container.innerHTML = `
         <div class="quiz-header">
             <div class="header-left">
-                <img src="images/company-logo.png" alt="Company Logo" class="company-logo">
-                <span class="company-name">Your Company</span>
+                <img src="images/company-logo.png" alt="The Conclusion Daily Logo" class="company-logo">
+                <span class="company-name">The Conclusion Daily</span>
             </div>
             <div class="user-info">
                 <span>Welcome, ${currentUser.name}!</span>
@@ -305,6 +310,71 @@ function showQuiz() {
     
     updateProgressBar();
     setupSwipeGestures();
+}
+
+function showProfile() {
+    const user = currentUser;
+    const results = user.quizResults || [];
+    const bestScore = results.length > 0 ? Math.max(...results.map(r => r.percentage)) : 0;
+    const totalAttempts = results.length;
+    
+    container.innerHTML = `
+        <div class="profile-container">
+            <div class="profile-header">
+                <h1>Your Profile 👤</h1>
+                <button onclick="showQuiz()" class="back-btn">Back to Quiz</button>
+            </div>
+            
+            <div class="profile-info">
+                <div class="info-item">
+                    <label>Name:</label>
+                    <span>${user.name}</span>
+                </div>
+                <div class="info-item">
+                    <label>Email:</label>
+                    <span>${user.email}</span>
+                </div>
+                <div class="info-item">
+                    <label>Mobile:</label>
+                    <span>${user.mobile}</span>
+                </div>
+                <div class="info-item">
+                    <label>Member since:</label>
+                    <span>${user.registeredAt}</span>
+                </div>
+            </div>
+            
+            <div class="stats-container">
+                <h2>Quiz Statistics 📊</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">${totalAttempts}</div>
+                        <div class="stat-label">Total Attempts</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${bestScore}%</div>
+                        <div class="stat-label">Best Score</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${questions.length}</div>
+                        <div class="stat-label">Questions</div>
+                    </div>
+                </div>
+            </div>
+            
+            ${results.length > 0 ? `
+                <div class="attempts-history">
+                    <h3>Recent Attempts</h3>
+                    ${results.slice(-5).reverse().map(result => `
+                        <div class="attempt-item">
+                            <div class="attempt-score">${result.score}/${result.total} (${result.percentage}%)</div>
+                            <div class="attempt-date">${result.date} ${result.time}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : '<p class="no-attempts">No quiz attempts yet. Start your first quiz!</p>'}
+        </div>
+    `;
 }
 
 function showQuestion(index) {
@@ -430,13 +500,18 @@ function setupSwipeGestures() {
 }
 
 function showResults() {
-    const percentage = Math.round((score / questions.length) * 100);
-    let message = '';
+    // Calculate score
+    score = 0;
+    for (let i = 0; i < questions.length; i++) {
+        if (userAnswers[i] === questions[i].correctAnswer) {
+            score++;
+        }
+    }
     
-    if (percentage >= 80) message = 'Excellent! 🎉';
-    else if (percentage >= 60) message = 'Great job! 👍';
-    else if (percentage >= 40) message = 'Good effort! 😊';
-    else message = 'Keep practicing! 💪';
+    const percentage = Math.round((score / questions.length) * 100);
+    
+    // Save result for registered users
+    saveUserResult(score, questions.length);
     
     // Build results HTML first
     let resultsHTML = `
@@ -486,7 +561,14 @@ function showResults() {
     container.innerHTML = resultsHTML;
 }
 
-// Add this at the end of your file
+function restartQuiz() {
+    currentQuestion = 0;
+    userAnswers = [];
+    score = 0;
+    showQuiz();
+}
+
+// Make functions globally available
 window.showQuiz = showQuiz;
 window.showQuestion = showQuestion;
 window.selectOption = selectOption;
@@ -500,6 +582,7 @@ window.restartQuiz = restartQuiz;
 
 // Initialize app
 function initApp() {
+    console.log('🚀 App starting...');
     const user = getCurrentUser();
     if (user) {
         currentUser = user;
