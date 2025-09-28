@@ -1,18 +1,18 @@
-// Enhanced Questions Reels App with User Registration
+// Enhanced Questions Reels App with Mobile Number & Centered Layout
 const questions = [
     {
         id: 1,
         question: "",
         options: ['13', '6', '10', '12'],
         image: 'images/Question1.jpg',
-        correctAnswer: 2
+        correctAnswer: 0
     },
     {
         id: 2,
         question: "",
         options: ['784', '512', '900', "841"],
         image: 'images/Question2.jpg',
-        correctAnswer: 0
+        correctAnswer: 3
     },
     {
         id: 3,
@@ -33,35 +33,35 @@ const questions = [
         question: "",
         options: ['243', '441', '526', '625'],
         image: 'images/Question5.jpg',
-        correctAnswer: 1
+        correctAnswer: 3
     },
     {
         id: 6,
         question: "",
         options: ['99', '105', '115', '110'],
         image: 'images/Question6.jpg',
-        correctAnswer: 3
+        correctAnswer: 1
     },
     {
         id: 7,
         question: "",
         options: ['1595', '1379', '1437', '1617'],
         image: 'images/Question7.jpg',
-        correctAnswer: 0
+        correctAnswer: 2
     },
     {
         id: 8,
         question: "",
         options: ['1009', '1109', '1099', '1199'],
         image: 'images/Question8.jpg',
-        correctAnswer: 2
+        correctAnswer: 0
     },
     {
         id: 9,
         question: "",
         options: ['4', '6', '8', '9'],
         image: 'images/Question9.jpg',
-        correctAnswer: 1
+        correctAnswer: 3
     },
     {
         id: 10,
@@ -146,12 +146,6 @@ function showLoginScreen() {
                 <button onclick="showRegisterScreen()" class="auth-switch-btn">
                     Don't have an account? Register
                 </button>
-                
-                <div class="auth-guest">
-                    <button onclick="continueAsGuest()" class="guest-btn">
-                        Continue as Guest
-                    </button>
-                </div>
             </div>
         </div>
     `;
@@ -167,6 +161,7 @@ function showRegisterScreen() {
                 <div class="auth-form">
                     <input type="text" id="registerName" placeholder="Full Name" class="auth-input">
                     <input type="email" id="registerEmail" placeholder="Email Address" class="auth-input">
+                    <input type="tel" id="registerMobile" placeholder="Mobile Number" class="auth-input">
                     <input type="password" id="registerPassword" placeholder="Create Password" class="auth-input">
                     <input type="password" id="registerConfirm" placeholder="Confirm Password" class="auth-input">
                     <button onclick="register()" class="auth-btn">Create Account</button>
@@ -207,11 +202,19 @@ function login() {
 function register() {
     const name = document.getElementById('registerName').value;
     const email = document.getElementById('registerEmail').value;
+    const mobile = document.getElementById('registerMobile').value;
     const password = document.getElementById('registerPassword').value;
     const confirm = document.getElementById('registerConfirm').value;
     
-    if (!name || !email || !password || !confirm) {
+    if (!name || !email || !mobile || !password || !confirm) {
         alert('Please fill all fields');
+        return;
+    }
+    
+    // Mobile number validation
+    const mobileRegex = /^[0-9]{10}$/;
+    if (!mobileRegex.test(mobile)) {
+        alert('Please enter a valid 10-digit mobile number');
         return;
     }
     
@@ -232,10 +235,17 @@ function register() {
         return;
     }
     
+    // Check if mobile number already exists
+    if (users.find(u => u.mobile === mobile)) {
+        alert('Mobile number already registered');
+        return;
+    }
+    
     const newUser = {
         id: Date.now(),
         name: name,
         email: email,
+        mobile: mobile,
         password: password,
         registeredAt: new Date().toLocaleDateString(),
         quizResults: []
@@ -247,25 +257,13 @@ function register() {
     showQuiz();
 }
 
-function continueAsGuest() {
-    const guestUser = {
-        id: 'guest',
-        name: 'Guest',
-        email: 'guest@quiz.com',
-        isGuest: true
-    };
-    
-    setCurrentUser(guestUser);
-    showQuiz();
-}
-
 // Quiz Functions
 function showQuiz() {
     container.innerHTML = `
         <div class="quiz-header">
             <div class="user-info">
                 <span>Welcome, ${currentUser.name}!</span>
-                ${!currentUser.isGuest ? `<button onclick="showProfile()" class="profile-btn">Profile</button>` : ''}
+                <button onclick="showProfile()" class="profile-btn">Profile</button>
                 <button onclick="logout()" class="logout-btn">Logout</button>
             </div>
         </div>
@@ -275,15 +273,17 @@ function showQuiz() {
         <div class="reels-container">
             ${questions.map((q, index) => `
                 <div class="question-slide" id="slide-${index}" style="display: ${index === 0 ? 'flex' : 'none'}">
-                    ${q.image ? `<img src="${q.image}" alt="Question image" class="question-image" onerror="this.style.display='none'">` : ''}
-                    <div class="question-content">
-                        <h2 class="question-text">${q.question}</h2>
-                        <div class="options-grid">
-                            ${q.options.map((option, optIndex) => `
-                                <button class="option-btn" onclick="selectOption(${index}, ${optIndex})">
-                                    ${option}
-                                </button>
-                            `).join('')}
+                    <div class="question-wrapper">
+                        ${q.image ? `<img src="${q.image}" alt="Question image" class="question-image" onerror="this.style.display='none'">` : ''}
+                        <div class="question-content">
+                            <h2 class="question-text">${q.question}</h2>
+                            <div class="options-grid">
+                                ${q.options.map((option, optIndex) => `
+                                    <button class="option-btn" onclick="selectOption(${index}, ${optIndex})">
+                                        ${option}
+                                    </button>
+                                `).join('')}
+                            </div>
                         </div>
                         <div class="counter">${index + 1} / ${questions.length}</div>
                     </div>
@@ -318,6 +318,10 @@ function showProfile() {
                 <div class="info-item">
                     <label>Email:</label>
                     <span>${user.email}</span>
+                </div>
+                <div class="info-item">
+                    <label>Mobile:</label>
+                    <span>${user.mobile}</span>
                 </div>
                 <div class="info-item">
                     <label>Member since:</label>
@@ -358,8 +362,86 @@ function showProfile() {
     `;
 }
 
-// ... REST OF THE QUIZ FUNCTIONS REMAIN THE SAME (showQuestion, selectOption, etc.)
-// Just update the showResults function:
+function showQuestion(index) {
+    if (index < 0 || index >= questions.length) return;
+    
+    document.querySelectorAll('.question-slide').forEach(slide => {
+        slide.style.display = 'none';
+    });
+    
+    const currentSlide = document.getElementById(`slide-${index}`);
+    if (currentSlide) {
+        currentSlide.style.display = 'flex';
+    }
+    
+    currentQuestion = index;
+    updateProgressBar();
+}
+
+function selectOption(questionIndex, optionIndex) {
+    const buttons = document.querySelectorAll(`#slide-${questionIndex} .option-btn`);
+    
+    // Remove all selections
+    buttons.forEach(btn => {
+        btn.classList.remove('selected');
+    });
+    
+    // Add selected class (no correct/wrong colors)
+    buttons[optionIndex].classList.add('selected');
+    
+    // Store user answer
+    userAnswers[questionIndex] = optionIndex;
+    
+    // Auto move to next question after 1 second (no answer reveal)
+    setTimeout(() => {
+        if (questionIndex < questions.length - 1) {
+            showQuestion(questionIndex + 1);
+        } else {
+            showResults();
+        }
+    }, 1000);
+}
+
+function updateProgressBar() {
+    const progress = (currentQuestion / (questions.length - 1)) * 100;
+    const progressElement = document.querySelector('.progress');
+    if (progressElement) {
+        progressElement.style.width = progress + '%';
+    }
+}
+
+function setupSwipeGestures() {
+    let startY = 0;
+    let endY = 0;
+    
+    container.addEventListener('touchstart', (e) => {
+        startY = e.touches[0].clientY;
+    });
+    
+    container.addEventListener('touchend', (e) => {
+        endY = e.changedTouches[0].clientY;
+        handleSwipe();
+    });
+    
+    function handleSwipe() {
+        const diff = startY - endY;
+        
+        if (diff > 50 && currentQuestion < questions.length - 1) {
+            showQuestion(currentQuestion + 1);
+        } else if (diff < -50 && currentQuestion > 0) {
+            showQuestion(currentQuestion - 1);
+        }
+    }
+    
+    document.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        if (e.deltaY > 50 && currentQuestion < questions.length - 1) {
+            showQuestion(currentQuestion + 1);
+        } else if (e.deltaY < -50 && currentQuestion > 0) {
+            showQuestion(currentQuestion - 1);
+        }
+    }, { passive: false });
+}
 
 function showResults() {
     // Calculate score
@@ -373,17 +455,14 @@ function showResults() {
     const percentage = Math.round((score / questions.length) * 100);
     
     // Save result for registered users
-    if (!currentUser.isGuest) {
-        saveUserResult(score, questions.length);
-    }
+    saveUserResult(score, questions.length);
     
-    // Create results HTML (same as before, but add user info)
+    // Create results HTML
     let resultsHTML = `
         <div class="results-container">
             <div class="results-content">
                 <div class="user-results-header">
                     <div class="user-greeting">Well done, ${currentUser.name}! 🎉</div>
-                    ${currentUser.isGuest ? '<div class="guest-notice">Register to save your progress!</div>' : ''}
                 </div>
                 <div class="results-title">Quiz Completed!</div>
                 <div class="results-score">${score}/${questions.length}</div>
@@ -414,8 +493,7 @@ function showResults() {
                 </div>
                 <div class="results-actions">
                     <button class="restart-btn" onclick="restartQuiz()">Take Quiz Again</button>
-                    ${!currentUser.isGuest ? '<button class="profile-btn" onclick="showProfile()">View Profile</button>' : ''}
-                    ${currentUser.isGuest ? '<button class="auth-btn" onclick="showRegisterScreen()">Register to Save Progress</button>' : ''}
+                    <button class="profile-btn" onclick="showProfile()">View Profile</button>
                 </div>
             </div>
         </div>
@@ -424,7 +502,12 @@ function showResults() {
     container.innerHTML = resultsHTML;
 }
 
-// ... REST OF THE QUIZ FUNCTIONS (showQuestion, selectOption, updateProgressBar, setupSwipeGestures, restartQuiz)
+function restartQuiz() {
+    currentQuestion = 0;
+    userAnswers = [];
+    score = 0;
+    showQuiz();
+}
 
 // Initialize app
 function initApp() {
