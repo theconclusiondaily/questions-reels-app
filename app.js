@@ -1,18 +1,18 @@
-// Enhanced Questions Reels App with Mobile Number & Centered Layout
+// Enhanced Questions Reels App with User Registration
 const questions = [
     {
         id: 1,
         question: "",
         options: ['13', '6', '10', '12'],
         image: 'images/Question1.jpg',
-        correctAnswer: 2
+        correctAnswer: 0
     },
     {
         id: 2,
         question: "",
         options: ['784', '512', '900', "841"],
         image: 'images/Question2.jpg',
-        correctAnswer: 0
+        correctAnswer: 3
     },
     {
         id: 3,
@@ -33,35 +33,35 @@ const questions = [
         question: "",
         options: ['243', '441', '526', '625'],
         image: 'images/Question5.jpg',
-        correctAnswer: 1
+        correctAnswer: 3
     },
     {
         id: 6,
         question: "",
         options: ['99', '105', '115', '110'],
         image: 'images/Question6.jpg',
-        correctAnswer: 3
+        correctAnswer: 1
     },
     {
         id: 7,
         question: "",
         options: ['1595', '1379', '1437', '1617'],
         image: 'images/Question7.jpg',
-        correctAnswer: 0
+        correctAnswer: 2
     },
     {
         id: 8,
         question: "",
         options: ['1009', '1109', '1099', '1199'],
         image: 'images/Question8.jpg',
-        correctAnswer: 2
+        correctAnswer: 0
     },
     {
         id: 9,
         question: "",
         options: ['4', '6', '8', '9'],
         image: 'images/Question9.jpg',
-        correctAnswer: 1
+        correctAnswer: 3
     },
     {
         id: 10,
@@ -131,8 +131,8 @@ function showLoginScreen() {
         <div class="auth-container">
             <div class="auth-box">
                 <div class="auth-header">
-                    <img src="images/company-logo.png" alt="theconclusiondaily Logo" class="auth-logo">
-                    <h1 class="auth-title">Welcome to The Conclusion Daily Quiz! 🎯</h1>
+                    <img src="images/company-logo.png" alt="Company Logo" class="auth-logo">
+                    <h1 class="auth-title">Welcome to Quiz Reels! 🎯</h1>
                 </div>
                 <p class="auth-subtitle">Test your knowledge with our interactive quiz</p>
                 
@@ -159,8 +159,8 @@ function showRegisterScreen() {
         <div class="auth-container">
             <div class="auth-box">
                 <div class="auth-header">
-                    <img src="images/company-logo.png" alt="theconclusiondaily Logo" class="auth-logo">
-                    <h1 class="auth-title">Join The Conclusion Daily 👤</h1>
+                    <img src="images/company-logo.png" alt="Company Logo" class="auth-logo">
+                    <h1 class="auth-title">Create Account 👤</h1>
                 </div>
                 <p class="auth-subtitle">Join thousands of quiz enthusiasts</p>
                 
@@ -263,13 +263,18 @@ function register() {
     showQuiz();
 }
 
-// Quiz Functions
+// Quiz Functions - FIXED VERSION
 function showQuiz() {
+    // Reset quiz state
+    currentQuestion = 0;
+    userAnswers = [];
+    score = 0;
+    
     container.innerHTML = `
         <div class="quiz-header">
-            <div class="header-center">
-                <img src="images/company-logo.png" alt="theconclusiondaily Logo" class="company-logo">
-                <span class="company-name">The Conclusion Daily</span>
+            <div class="header-left">
+                <img src="images/company-logo.png" alt="Company Logo" class="company-logo">
+                <span class="company-name">Your Company</span>
             </div>
             <div class="user-info">
                 <span>Welcome, ${currentUser.name}!</span>
@@ -305,6 +310,167 @@ function showQuiz() {
     
     updateProgressBar();
     setupSwipeGestures();
+}
+
+function showQuestion(index) {
+    if (index < 0 || index >= questions.length) return;
+    
+    console.log('Showing question:', index); // Debug log
+    
+    // Hide all slides
+    document.querySelectorAll('.question-slide').forEach(slide => {
+        slide.style.display = 'none';
+    });
+    
+    // Show current slide
+    const currentSlide = document.getElementById(`slide-${index}`);
+    if (currentSlide) {
+        currentSlide.style.display = 'flex';
+        console.log('Slide displayed:', currentSlide.id); // Debug log
+    } else {
+        console.error('Slide not found:', `slide-${index}`); // Debug log
+    }
+    
+    currentQuestion = index;
+    updateProgressBar();
+}
+
+// FIXED OPTION SELECTION FUNCTION
+function selectOption(questionIndex, optionIndex) {
+    console.log('Option selected:', questionIndex, optionIndex); // Debug log
+    
+    const question = questions[questionIndex];
+    const buttons = document.querySelectorAll(`#slide-${questionIndex} .option-btn`);
+    
+    console.log('Buttons found:', buttons.length); // Debug log
+    
+    // Remove all selections
+    buttons.forEach(btn => {
+        btn.classList.remove('selected', 'correct', 'wrong');
+    });
+    
+    // Add selected class
+    buttons[optionIndex].classList.add('selected');
+    
+    // Store user answer
+    userAnswers[questionIndex] = optionIndex;
+    
+    console.log('User answers:', userAnswers); // Debug log
+    
+    // Auto move to next question after 1 second (no answer reveal)
+    setTimeout(() => {
+        if (questionIndex < questions.length - 1) {
+            showQuestion(questionIndex + 1);
+        } else {
+            showResults();
+        }
+    }, 1000);
+}
+
+function updateProgressBar() {
+    const progress = (currentQuestion / (questions.length - 1)) * 100;
+    const progressElement = document.querySelector('.progress');
+    if (progressElement) {
+        progressElement.style.width = progress + '%';
+    }
+}
+
+function setupSwipeGestures() {
+    let startY = 0;
+    let endY = 0;
+    
+    const reelContainer = document.querySelector('.reels-container');
+    if (!reelContainer) return;
+    
+    reelContainer.addEventListener('touchstart', (e) => {
+        startY = e.touches[0].clientY;
+    });
+    
+    reelContainer.addEventListener('touchend', (e) => {
+        endY = e.changedTouches[0].clientY;
+        handleSwipe();
+    });
+    
+    function handleSwipe() {
+        const diff = startY - endY;
+        
+        if (diff > 50 && currentQuestion < questions.length - 1) {
+            showQuestion(currentQuestion + 1);
+        } else if (diff < -50 && currentQuestion > 0) {
+            showQuestion(currentQuestion - 1);
+        }
+    }
+    
+    document.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        if (e.deltaY > 50 && currentQuestion < questions.length - 1) {
+            showQuestion(currentQuestion + 1);
+        } else if (e.deltaY < -50 && currentQuestion > 0) {
+            showQuestion(currentQuestion - 1);
+        }
+    }, { passive: false });
+}
+
+function showResults() {
+    // Calculate score
+    score = 0;
+    for (let i = 0; i < questions.length; i++) {
+        if (userAnswers[i] === questions[i].correctAnswer) {
+            score++;
+        }
+    }
+    
+    const percentage = Math.round((score / questions.length) * 100);
+    
+    // Save result for registered users
+    saveUserResult(score, questions.length);
+    
+    // Create results HTML
+    let resultsHTML = `
+        <div class="results-container">
+            <div class="results-content">
+                <div class="results-header">
+                    <img src="images/company-logo.png" alt="Company Logo" class="results-logo">
+                    <div class="user-results-header">
+                        <div class="user-greeting">Well done, ${currentUser.name}! 🎉</div>
+                    </div>
+                </div>
+                <div class="results-title">Quiz Completed!</div>
+                <div class="results-score">${score}/${questions.length}</div>
+                <div class="results-percentage">${percentage}% Correct</div>
+                
+                <div class="detailed-results">
+                    <h3>Detailed Results:</h3>
+    `;
+    
+    // Add each question with correct answer
+    questions.forEach((question, index) => {
+        const userAnswer = userAnswers[index];
+        const isCorrect = userAnswer === question.correctAnswer;
+        
+        resultsHTML += `
+            <div class="result-item ${isCorrect ? 'correct' : 'incorrect'}">
+                <div class="result-question">Q${index + 1}: ${question.question || 'Question ' + (index + 1)}</div>
+                <div class="result-answer">
+                    <span class="user-answer">Your answer: ${question.options[userAnswer] || 'Not answered'}</span>
+                    <span class="correct-answer">Correct answer: ${question.options[question.correctAnswer]}</span>
+                </div>
+                <div class="result-status">${isCorrect ? '✅ Correct' : '❌ Incorrect'}</div>
+            </div>
+        `;
+    });
+    
+    resultsHTML += `
+                </div>
+                <div class="results-actions">
+                    <button class="restart-btn" onclick="restartQuiz()">Take Quiz Again</button>
+                    <button class="profile-btn" onclick="showProfile()">View Profile</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    container.innerHTML = resultsHTML;
 }
 
 function showProfile() {
@@ -372,149 +538,6 @@ function showProfile() {
     `;
 }
 
-function showQuestion(index) {
-    if (index < 0 || index >= questions.length) return;
-    
-    document.querySelectorAll('.question-slide').forEach(slide => {
-        slide.style.display = 'none';
-    });
-    
-    const currentSlide = document.getElementById(`slide-${index}`);
-    if (currentSlide) {
-        currentSlide.style.display = 'flex';
-    }
-    
-    currentQuestion = index;
-    updateProgressBar();
-}
-
-function selectOption(questionIndex, optionIndex) {
-    const buttons = document.querySelectorAll(`#slide-${questionIndex} .option-btn`);
-    
-    // Remove all selections
-    buttons.forEach(btn => {
-        btn.classList.remove('selected');
-    });
-    
-    // Add selected class (no correct/wrong colors)
-    buttons[optionIndex].classList.add('selected');
-    
-    // Store user answer
-    userAnswers[questionIndex] = optionIndex;
-    
-    // Auto move to next question after 1 second (no answer reveal)
-    setTimeout(() => {
-        if (questionIndex < questions.length - 1) {
-            showQuestion(questionIndex + 1);
-        } else {
-            showResults();
-        }
-    }, 1000);
-}
-
-function updateProgressBar() {
-    const progress = (currentQuestion / (questions.length - 1)) * 100;
-    const progressElement = document.querySelector('.progress');
-    if (progressElement) {
-        progressElement.style.width = progress + '%';
-    }
-}
-
-function setupSwipeGestures() {
-    let startY = 0;
-    let endY = 0;
-    
-    container.addEventListener('touchstart', (e) => {
-        startY = e.touches[0].clientY;
-    });
-    
-    container.addEventListener('touchend', (e) => {
-        endY = e.changedTouches[0].clientY;
-        handleSwipe();
-    });
-    
-    function handleSwipe() {
-        const diff = startY - endY;
-        
-        if (diff > 50 && currentQuestion < questions.length - 1) {
-            showQuestion(currentQuestion + 1);
-        } else if (diff < -50 && currentQuestion > 0) {
-            showQuestion(currentQuestion - 1);
-        }
-    }
-    
-    document.addEventListener('wheel', (e) => {
-        e.preventDefault();
-        if (e.deltaY > 50 && currentQuestion < questions.length - 1) {
-            showQuestion(currentQuestion + 1);
-        } else if (e.deltaY < -50 && currentQuestion > 0) {
-            showQuestion(currentQuestion - 1);
-        }
-    }, { passive: false });
-}
-
-function showResults() {
-    // Calculate score
-    score = 0;
-    for (let i = 0; i < questions.length; i++) {
-        if (userAnswers[i] === questions[i].correctAnswer) {
-            score++;
-        }
-    }
-    
-    const percentage = Math.round((score / questions.length) * 100);
-    
-    // Save result for registered users
-    saveUserResult(score, questions.length);
-    
-    // Create results HTML
-    let resultsHTML = `
-        <div class="results-container">
-            <div class="results-content">
-                <div class="results-header">
-                    <img src="images/company-logo.png" alt="theconclusiondaily Logo" class="results-logo">
-                    <div class="user-results-header">
-                        <div class="user-greeting">The Conclusion Daily Quiz Results 🎉 ${currentUser.name}! 🎉</div>
-                    </div>
-                </div>
-                <div class="results-title">Quiz Completed!</div>
-                <div class="results-score">${score}/${questions.length}</div>
-                <div class="results-percentage">${percentage}% Correct</div>
-                
-                <div class="detailed-results">
-                    <h3>Detailed Results:</h3>
-    `;
-    
-    // Add each question with correct answer
-    questions.forEach((question, index) => {
-        const userAnswer = userAnswers[index];
-        const isCorrect = userAnswer === question.correctAnswer;
-        
-        resultsHTML += `
-            <div class="result-item ${isCorrect ? 'correct' : 'incorrect'}">
-                <div class="result-question">Q${index + 1}: ${question.question || 'Question ' + (index + 1)}</div>
-                <div class="result-answer">
-                    <span class="user-answer">Your answer: ${question.options[userAnswer] || 'Not answered'}</span>
-                    <span class="correct-answer">Correct answer: ${question.options[question.correctAnswer]}</span>
-                </div>
-                <div class="result-status">${isCorrect ? '✅ Correct' : '❌ Incorrect'}</div>
-            </div>
-        `;
-    });
-    
-    resultsHTML += `
-                </div>
-                <div class="results-actions">
-                    <button class="restart-btn" onclick="restartQuiz()">Take Quiz Again</button>
-                    <button class="profile-btn" onclick="showProfile()">View Profile</button>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    container.innerHTML = resultsHTML;
-}
-
 function restartQuiz() {
     currentQuestion = 0;
     userAnswers = [];
@@ -532,5 +555,17 @@ function initApp() {
         showLoginScreen();
     }
 }
+
+// Make functions globally available
+window.showQuiz = showQuiz;
+window.showQuestion = showQuestion;
+window.selectOption = selectOption;
+window.showProfile = showProfile;
+window.logout = logout;
+window.showLoginScreen = showLoginScreen;
+window.showRegisterScreen = showRegisterScreen;
+window.login = login;
+window.register = register;
+window.restartQuiz = restartQuiz;
 
 window.onload = initApp;
