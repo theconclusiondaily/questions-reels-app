@@ -705,3 +705,111 @@ body.results-page {
         width: 100%;
     }
 }
+/* Company Logo Styles */
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.company-logo {
+    height: 40px;
+    width: auto;
+    border-radius: 5px;
+}
+
+.company-name {
+    color: white;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+/* Update header layout */
+.quiz-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.9);
+    padding: 1rem;
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+    height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Changed to space-between */
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    color: white;
+    gap: 0.5rem;
+}
+/* Results Logo Styles */
+.results-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.results-logo {
+    height: 50px;
+    width: auto;
+    border-radius: 6px;
+}
+/* Complete Logo Styles for All Pages */
+.company-logo {
+    height: 40px;
+    width: auto;
+    border-radius: 5px;
+    object-fit: contain;
+}
+
+.auth-logo {
+    height: 60px;
+    width: auto;
+    border-radius: 8px;
+    object-fit: contain;
+    margin-bottom: 0.5rem;
+}
+
+.results-logo {
+    height: 50px;
+    width: auto;
+    border-radius: 6px;
+    object-fit: contain;
+}
+
+.profile-logo {
+    height: 70px;
+    width: auto;
+    border-radius: 10px;
+    object-fit: contain;
+    margin-bottom: 1rem;
+}
+
+/* Mobile responsive logos */
+@media (max-width: 768px) {
+    .company-logo {
+        height: 35px;
+    }
+    
+    .auth-logo {
+        height: 50px;
+    }
+    
+    .results-logo {
+        height: 45px;
+    }
+    
+    .company-name {
+        font-size: 1rem;
+    }
+    
+    .header-left {
+        gap: 0.5rem;
+    }
+}

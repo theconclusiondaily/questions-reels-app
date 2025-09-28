@@ -130,7 +130,10 @@ function showLoginScreen() {
     container.innerHTML = `
         <div class="auth-container">
             <div class="auth-box">
-                <h1 class="auth-title">Welcome to Quiz Reels! 🎯</h1>
+                <div class="auth-header">
+                    <img src="images/company-logo.png" alt="Company Logo" class="auth-logo">
+                    <h1 class="auth-title">Welcome to Quiz Reels! 🎯</h1>
+                </div>
                 <p class="auth-subtitle">Test your knowledge with our interactive quiz</p>
                 
                 <div class="auth-form">
@@ -155,7 +158,10 @@ function showRegisterScreen() {
     container.innerHTML = `
         <div class="auth-container">
             <div class="auth-box">
-                <h1 class="auth-title">Create Account 👤</h1>
+                <div class="auth-header">
+                    <img src="images/company-logo.png" alt="Company Logo" class="auth-logo">
+                    <h1 class="auth-title">Create Account 👤</h1>
+                </div>
                 <p class="auth-subtitle">Join thousands of quiz enthusiasts</p>
                 
                 <div class="auth-form">
@@ -261,6 +267,10 @@ function register() {
 function showQuiz() {
     container.innerHTML = `
         <div class="quiz-header">
+            <div class="header-left">
+                <img src="images/company-logo.png" alt="Company Logo" class="company-logo">
+                <span class="company-name">Your Company</span>
+            </div>
             <div class="user-info">
                 <span>Welcome, ${currentUser.name}!</span>
                 <button onclick="showProfile()" class="profile-btn">Profile</button>
@@ -461,8 +471,11 @@ function showResults() {
     let resultsHTML = `
         <div class="results-container">
             <div class="results-content">
-                <div class="user-results-header">
-                    <div class="user-greeting">Well done, ${currentUser.name}! 🎉</div>
+                <div class="results-header">
+                    <img src="images/company-logo.png" alt="Company Logo" class="results-logo">
+                    <div class="user-results-header">
+                        <div class="user-greeting">Well done, ${currentUser.name}! 🎉</div>
+                    </div>
                 </div>
                 <div class="results-title">Quiz Completed!</div>
                 <div class="results-score">${score}/${questions.length}</div>
