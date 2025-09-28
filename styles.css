@@ -838,15 +838,3 @@ body {
         font-size: 1rem;
     }
 }
-/* Temporary debug borders */
-.question-wrapper {
-    border: 2px solid red; /* Remove after testing */
-}
-
-.question-content {
-    border: 2px solid blue; /* Remove after testing */
-}
-
-.options-grid {
-    border: 2px solid green; /* Remove after testing */
-}
