@@ -2,38 +2,73 @@
 const questions = [
     {
         id: 1,
-        question: "What's your favorite programming language?",
-        options: ['JavaScript', 'Python', 'Java', 'C++'],
-        image: 'images/code.jpg',
-        correctAnswer: 0 // JavaScript
+        question: "",
+        options: ['13', '6', '10', '12'],
+        image: 'images/Question1.jpg',
+        correctAnswer: 
     },
     {
         id: 2,
-        question: "Which mobile OS do you prefer?",
-        options: ['iOS', 'Android', 'Both', "Don't care"],
-        image: 'images/mobile.jpg',
-        correctAnswer: 1 // Android
+        question: "",
+        options: ['784', '512', '900', "841"],
+        image: 'images/Question2.jpg',
+        correctAnswer: 
     },
     {
         id: 3,
-        question: "What's your favorite social media platform?",
-        options: ['Instagram', 'TikTok', 'YouTube', 'Twitter'],
-        image: 'images/social.jpg',
-        correctAnswer: 2 // YouTube
+        question: "",
+        options: ['18', '38', '46', '72'],
+        image: 'images/Question3.jpg',
+        correctAnswer: 
     },
     {
         id: 4,
-        question: "Do you prefer coffee or tea?",
-        options: ['Coffee', 'Tea', 'Both', 'Neither'],
-        image: 'images/coffee-tea.jpg',
-        correctAnswer: 0 // Coffee
+        question: "",
+        options: ['TZUTSZUHPM', 'TZUTSZSHPO', 'TBUTSZUHPM', 'TZUTUZUHPM'],
+        image: 'images/Question4.jpg',
+        correctAnswer: 
     },
     {
         id: 5,
-        question: "What's your ideal vacation?",
-        options: ['Beach', 'Mountains', 'City', 'Staycation'],
-        image: 'images/vacation.jpg',
-        correctAnswer: 1 // Mountains
+        question: "",
+        options: ['243', '441', '526', '625'],
+        image: 'images/Question5.jpg',
+        correctAnswer:
+    }
+    {
+        id: 6,
+        question: "",
+        options: ['99', '105', '115', '110'],
+        image: 'images/Question6.jpg',
+        correctAnswer: 
+    }
+    {
+        id: 7,
+        question: "",
+        options: ['1595', '1379', '1437', '1617'],
+        image: 'images/Question7.jpg',
+        correctAnswer: 
+    }
+    {
+        id: 8,
+        question: "",
+        options: ['1009', '1109', '1099', '1199'],
+        image: 'images/Question8.jpg',
+        correctAnswer: 
+    }
+    {
+        id: 9,
+        question: "",
+        options: ['4', '6', '8', '9'],
+        image: 'images/Question9.jpg',
+        correctAnswer: 
+    }
+    {
+        id: 10,
+        question: "",
+        options: ['78', '79', '80', '81'],
+        image: 'images/Question10.jpg',
+        correctAnswer: 
     }
 ];
 
