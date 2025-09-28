@@ -103,30 +103,32 @@ body {
     box-sizing: border-box;
 }
 
-/* Option 3: Grid Centering (Most Reliable) */
+/* FORCED CENTERING - Guaranteed to work */
 .question-slide {
     height: calc(100vh - 84px);
-    display: grid;
-    place-items: center; /* Perfect centering */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     padding: 20px;
     position: relative;
 }
 
 .question-wrapper {
-    display: flex;
+    display: flex !important;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    max-width: 1000px;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 90% !important;
+    max-width: 1200px !important;
     text-align: center;
-    gap: 1.5rem;
+    gap: 2rem;
+    margin: 0 auto !important;
 }
 
 .question-image {
-    max-width: 750px;
-    max-height: 525px;
+    max-width: 800px !important;
+    max-height: 500px !important;
     width: auto;
     height: auto;
     border-radius: 20px;
@@ -134,34 +136,27 @@ body {
     border: 4px solid white;
     box-shadow: 0 20px 60px rgba(0,0,0,0.5);
     background: rgba(255, 255, 255, 0.1);
+    display: block !important;
+    margin: 0 auto !important;
 }
 
 .question-content {
-    display: flex;
+    display: flex !important;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    gap: 1.5rem;
-}
-
-.question-text {
-    color: white;
-    font-size: 2rem;
-    font-weight: bold;
-    line-height: 1.3;
-    text-shadow: 2px 2px 6px rgba(0,0,0,0.6);
-    max-width: 800px;
-    text-align: center;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    gap: 2rem;
 }
 
 .options-grid {
-    display: grid;
-    gap: 1rem;
-    grid-template-columns: repeat(2, minmax(250px, 1fr));
-    width: 100%;
-    max-width: 700px;
-    justify-content: center;
+    display: grid !important;
+    gap: 1.5rem;
+    grid-template-columns: 1fr 1fr !important;
+    width: 100% !important;
+    max-width: 800px !important;
+    margin: 0 auto !important;
+    justify-items: center !important;
 }
 
 .option-btn {
@@ -169,19 +164,20 @@ body {
     backdrop-filter: blur(10px);
     border: 2px solid rgba(255, 255, 255, 0.2);
     color: white;
-    padding: 1.5rem 1rem;
+    padding: 1.8rem 1.5rem;
     border-radius: 15px;
-    font-size: 1.2rem;
+    font-size: 1.3rem;
     cursor: pointer;
     transition: all 0.3s ease;
     font-weight: bold;
-    min-height: 80px;
+    min-height: 100px;
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
     word-break: break-word;
-    width: 100%;
+    width: 100% !important;
+    max-width: 350px !important; /* Limit button width */
 }
 
 .counter {
@@ -782,59 +778,49 @@ body {
         height: 60px;
     }
 }
-/* Mobile Centering Fixes */
+/* Mobile Responsive */
 @media (max-width: 768px) {
-    .question-slide {
-        padding: 15px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    
     .question-wrapper {
-        gap: 1rem;
+        width: 95% !important;
+        gap: 1.5rem;
     }
     
     .question-image {
-        max-width: 95%;
-        max-height: 400px;
+        max-width: 95% !important;
+        max-height: 400px !important;
     }
     
     .question-text {
-        font-size: 1.6rem;
-        max-width: 90%;
+        font-size: 1.8rem;
+        max-width: 95%;
     }
     
     .options-grid {
-        grid-template-columns: 1fr;
-        max-width: 400px;
-        gap: 0.8rem;
+        grid-template-columns: 1fr !important;
+        max-width: 500px !important;
+        gap: 1rem;
     }
     
     .option-btn {
-        max-width: 100%;
-        min-height: 70px;
-        padding: 1.2rem 0.8rem;
-        font-size: 1.1rem;
+        min-height: 80px;
+        padding: 1.5rem 1rem;
+        font-size: 1.2rem;
+        max-width: 100% !important;
     }
 }
 
 @media (max-width: 480px) {
-    .question-slide {
-        padding: 10px;
-    }
-    
     .question-image {
-        max-height: 350px;
+        max-height: 350px !important;
     }
     
     .question-text {
-        font-size: 1.4rem;
+        font-size: 1.5rem;
     }
     
     .option-btn {
-        min-height: 60px;
-        padding: 1rem 0.6rem;
-        font-size: 1rem;
+        min-height: 70px;
+        padding: 1.2rem 0.8rem;
+        font-size: 1.1rem;
     }
 }
