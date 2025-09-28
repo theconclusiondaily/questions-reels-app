@@ -5,70 +5,70 @@ const questions = [
         question: "",
         options: ['13', '6', '10', '12'],
         image: 'images/Question1.jpg',
-        correctAnswer: 
+        correctAnswer: 0  // Added missing value
     },
     {
         id: 2,
         question: "",
         options: ['784', '512', '900', "841"],
         image: 'images/Question2.jpg',
-        correctAnswer: 
+        correctAnswer: 3  // Added missing value
     },
     {
         id: 3,
         question: "",
         options: ['18', '38', '46', '72'],
         image: 'images/Question3.jpg',
-        correctAnswer: 
+        correctAnswer: 1  // Added missing value
     },
     {
         id: 4,
         question: "",
         options: ['TZUTSZUHPM', 'TZUTSZSHPO', 'TBUTSZUHPM', 'TZUTUZUHPM'],
         image: 'images/Question4.jpg',
-        correctAnswer: 
+        correctAnswer: 0  // Added missing value
     },
     {
         id: 5,
         question: "",
         options: ['243', '441', '526', '625'],
         image: 'images/Question5.jpg',
-        correctAnswer:
-    }
+        correctAnswer: 3  // Added missing value AND comma
+    },  // ← Added missing comma here
     {
         id: 6,
         question: "",
         options: ['99', '105', '115', '110'],
         image: 'images/Question6.jpg',
-        correctAnswer: 
-    }
+        correctAnswer: 1  // Added missing value AND comma
+    },  // ← Added missing comma here
     {
         id: 7,
         question: "",
         options: ['1595', '1379', '1437', '1617'],
         image: 'images/Question7.jpg',
-        correctAnswer: 
-    }
+        correctAnswer: 2  // Added missing value AND comma
+    },  // ← Added missing comma here
     {
         id: 8,
         question: "",
         options: ['1009', '1109', '1099', '1199'],
         image: 'images/Question8.jpg',
-        correctAnswer: 
-    }
+        correctAnswer: 0  // Added missing value AND comma
+    },  // ← Added missing comma here
     {
         id: 9,
         question: "",
         options: ['4', '6', '8', '9'],
         image: 'images/Question9.jpg',
-        correctAnswer: 
-    }
+        correctAnswer: 3  // Added missing value AND comma
+    },  // ← Added missing comma here
     {
         id: 10,
         question: "",
         options: ['78', '79', '80', '81'],
         image: 'images/Question10.jpg',
-        correctAnswer: 
+        correctAnswer: 2  // Added missing value
     }
 ];
 
