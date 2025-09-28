@@ -616,3 +616,92 @@ body {
         font-size: 2.5rem;
     }
 }
+/* Fixed Results Container */
+.results-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    padding: 90px 20px 20px 20px;
+    display: flex;
+    align-items: flex-start; /* Changed from center to flex-start */
+    justify-content: center;
+    overflow-y: auto; /* Enable scrolling */
+}
+
+.results-content {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 2.5rem;
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    max-width: 800px;
+    width: 100%;
+    text-align: center;
+    margin: 20px 0; /* Add margin for better spacing */
+}
+
+/* Make detailed results scrollable */
+.detailed-results {
+    margin: 2rem 0;
+    text-align: left;
+    max-height: 400px; /* Limit height */
+    overflow-y: auto; /* Enable scrolling */
+    padding-right: 10px; /* Space for scrollbar */
+}
+
+/* Custom scrollbar for detailed results */
+.detailed-results::-webkit-scrollbar {
+    width: 8px;
+}
+
+.detailed-results::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.detailed-results::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+.detailed-results::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Ensure body allows scrolling */
+body.results-page {
+    overflow-y: auto;
+    height: auto;
+}
+
+/* Alternative: Make entire results page scrollable */
+.scrollable-results {
+    min-height: auto;
+    height: auto;
+    align-items: flex-start;
+    padding-bottom: 40px;
+}
+
+/* Mobile responsive fixes */
+@media (max-width: 768px) {
+    .results-container {
+        padding: 80px 15px 15px 15px;
+        align-items: flex-start;
+    }
+    
+    .results-content {
+        padding: 1.5rem;
+        margin: 10px 0;
+    }
+    
+    .detailed-results {
+        max-height: 300px;
+    }
+    
+    .results-actions {
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+    
+    .restart-btn, .profile-btn {
+        width: 100%;
+    }
+}
