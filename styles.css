@@ -103,32 +103,27 @@ body {
     box-sizing: border-box;
 }
 
-/* Perfectly Centered Question Slides */
+/* Option 3: Grid Centering (Most Reliable) */
 .question-slide {
     height: calc(100vh - 84px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: grid;
+    place-items: center; /* Perfect centering */
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     padding: 20px;
     position: relative;
-    overflow: hidden;
 }
 
-/* Centered Wrapper */
 .question-wrapper {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center; /* This ensures vertical centering */
-    height: 100%;
+    justify-content: center;
     width: 100%;
     max-width: 1000px;
     text-align: center;
     gap: 1.5rem;
 }
 
-/* Larger Question Images - Centered */
 .question-image {
     max-width: 750px;
     max-height: 525px;
@@ -139,11 +134,8 @@ body {
     border: 4px solid white;
     box-shadow: 0 20px 60px rgba(0,0,0,0.5);
     background: rgba(255, 255, 255, 0.1);
-    display: block;
-    margin: 0 auto; /* Center the image */
 }
 
-/* Centered Question Content */
 .question-content {
     display: flex;
     flex-direction: column;
@@ -151,10 +143,8 @@ body {
     justify-content: center;
     width: 100%;
     gap: 1.5rem;
-    flex: 1;
 }
 
-/* Centered Question Text */
 .question-text {
     color: white;
     font-size: 2rem;
@@ -162,25 +152,18 @@ body {
     line-height: 1.3;
     text-shadow: 2px 2px 6px rgba(0,0,0,0.6);
     max-width: 800px;
-    margin: 0 auto; /* Center the text */
     text-align: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
-/* Perfectly Centered Options Grid */
 .options-grid {
     display: grid;
     gap: 1rem;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(250px, 1fr));
     width: 100%;
     max-width: 700px;
-    margin: 0 auto; /* Center the grid */
-    justify-items: center; /* Center items within grid */
+    justify-content: center;
 }
 
-/* Centered Option Buttons */
 .option-btn {
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
@@ -198,8 +181,7 @@ body {
     justify-content: center;
     text-align: center;
     word-break: break-word;
-    width: 100%; /* Ensure buttons take full grid cell width */
-    max-width: 300px; /* Limit button width */
+    width: 100%;
 }
 
 .counter {
@@ -855,4 +837,16 @@ body {
         padding: 1rem 0.6rem;
         font-size: 1rem;
     }
+}
+/* Temporary debug borders */
+.question-wrapper {
+    border: 2px solid red; /* Remove after testing */
+}
+
+.question-content {
+    border: 2px solid blue; /* Remove after testing */
+}
+
+.options-grid {
+    border: 2px solid green; /* Remove after testing */
 }
