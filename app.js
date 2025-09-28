@@ -308,10 +308,18 @@ function showQuiz() {
 }
 
 function showQuestion(index) {
-    if (index < 0 || index >= questions.length) return;
+    console.log('🔄 showQuestion called with index:', index);
+    
+    if (index < 0 || index >= questions.length) {
+        console.log('❌ Invalid index');
+        return;
+    }
     
     // Hide all slides
-    document.querySelectorAll('.question-slide').forEach(slide => {
+    const slides = document.querySelectorAll('.question-slide');
+    console.log('📊 Total slides found:', slides.length);
+    
+    slides.forEach((slide, i) => {
         slide.style.display = 'none';
     });
     
@@ -319,6 +327,9 @@ function showQuestion(index) {
     const currentSlide = document.getElementById(`slide-${index}`);
     if (currentSlide) {
         currentSlide.style.display = 'flex';
+        console.log('🎯 Now showing slide', index);
+    } else {
+        console.error('❌ Slide not found: slide-' + index);
     }
     
     currentQuestion = index;
@@ -326,8 +337,11 @@ function showQuestion(index) {
 }
 
 function selectOption(questionIndex, optionIndex) {
+    console.log('🎯 selectOption called:', questionIndex, optionIndex);
+    
     const question = questions[questionIndex];
     const buttons = document.querySelectorAll(`#slide-${questionIndex} .option-btn`);
+    console.log('🔘 Buttons found:', buttons.length);
     
     // Remove all selections
     buttons.forEach(btn => {
@@ -335,15 +349,21 @@ function selectOption(questionIndex, optionIndex) {
     });
     
     // Add selected class
-    buttons[optionIndex].classList.add('selected');
+    if (buttons[optionIndex]) {
+        buttons[optionIndex].classList.add('selected');
+        console.log('✅ Added selected class to button', optionIndex);
+    }
     
     // Store user answer
     userAnswers[questionIndex] = optionIndex;
+    console.log('📝 User answers:', userAnswers);
     
     // Show correct/wrong with colors
     setTimeout(() => {
-        buttons[question.correctAnswer].classList.add('correct');
-        if (optionIndex !== question.correctAnswer) {
+        if (buttons[question.correctAnswer]) {
+            buttons[question.correctAnswer].classList.add('correct');
+        }
+        if (optionIndex !== question.correctAnswer && buttons[optionIndex]) {
             buttons[optionIndex].classList.add('wrong');
         }
         
@@ -356,8 +376,10 @@ function selectOption(questionIndex, optionIndex) {
     // Auto move to next question after 2 seconds
     setTimeout(() => {
         if (questionIndex < questions.length - 1) {
+            console.log('➡️ Moving to next question:', questionIndex + 1);
             showQuestion(questionIndex + 1);
         } else {
+            console.log('🏁 Quiz completed!');
             showResults();
         }
     }, 2000);
@@ -416,7 +438,8 @@ function showResults() {
     else if (percentage >= 40) message = 'Good effort! 😊';
     else message = 'Keep practicing! 💪';
     
-    container.innerHTML = `
+    // Build results HTML first
+    let resultsHTML = `
         <div class="results-container">
             <div class="results-content">
                 <div class="results-header">
@@ -438,7 +461,7 @@ function showResults() {
         const userAnswer = userAnswers[index];
         const isCorrect = userAnswer === question.correctAnswer;
         
-        container.innerHTML += `
+        resultsHTML += `
             <div class="result-item ${isCorrect ? 'correct' : 'incorrect'}">
                 <div class="result-question">Q${index + 1}: ${question.question || 'Question ' + (index + 1)}</div>
                 <div class="result-answer">
@@ -450,7 +473,7 @@ function showResults() {
         `;
     });
     
-    container.innerHTML += `
+    resultsHTML += `
                 </div>
                 <div class="results-actions">
                     <button class="restart-btn" onclick="restartQuiz()">Take Quiz Again</button>
@@ -459,81 +482,11 @@ function showResults() {
             </div>
         </div>
     `;
-}
-
-function showProfile() {
-    const user = currentUser;
-    const results = user.quizResults || [];
-    const bestScore = results.length > 0 ? Math.max(...results.map(r => r.percentage)) : 0;
-    const totalAttempts = results.length;
     
-    container.innerHTML = `
-        <div class="profile-container">
-            <div class="profile-header">
-                <h1>Your Profile 👤</h1>
-                <button onclick="showQuiz()" class="back-btn">Back to Quiz</button>
-            </div>
-            
-            <div class="profile-info">
-                <div class="info-item">
-                    <label>Name:</label>
-                    <span>${user.name}</span>
-                </div>
-                <div class="info-item">
-                    <label>Email:</label>
-                    <span>${user.email}</span>
-                </div>
-                <div class="info-item">
-                    <label>Mobile:</label>
-                    <span>${user.mobile}</span>
-                </div>
-                <div class="info-item">
-                    <label>Member since:</label>
-                    <span>${user.registeredAt}</span>
-                </div>
-            </div>
-            
-            <div class="stats-container">
-                <h2>Quiz Statistics 📊</h2>
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-value">${totalAttempts}</div>
-                        <div class="stat-label">Total Attempts</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">${bestScore}%</div>
-                        <div class="stat-label">Best Score</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">${questions.length}</div>
-                        <div class="stat-label">Questions</div>
-                    </div>
-                </div>
-            </div>
-            
-            ${results.length > 0 ? `
-                <div class="attempts-history">
-                    <h3>Recent Attempts</h3>
-                    ${results.slice(-5).reverse().map(result => `
-                        <div class="attempt-item">
-                            <div class="attempt-score">${result.score}/${result.total} (${result.percentage}%)</div>
-                            <div class="attempt-date">${result.date} ${result.time}</div>
-                        </div>
-                    `).join('')}
-                </div>
-            ` : '<p class="no-attempts">No quiz attempts yet. Start your first quiz!</p>'}
-        </div>
-    `;
+    container.innerHTML = resultsHTML;
 }
 
-function restartQuiz() {
-    currentQuestion = 0;
-    userAnswers = [];
-    score = 0;
-    showQuiz();
-}
-
-// Make functions globally available
+// Add this at the end of your file
 window.showQuiz = showQuiz;
 window.showQuestion = showQuestion;
 window.selectOption = selectOption;
