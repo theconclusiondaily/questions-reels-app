@@ -240,6 +240,7 @@ function showLoginScreen() {
     `;
 }
 
+// Enhanced authentication with validation and CAPTCHA
 function showRegisterScreen() {
     container.innerHTML = `
         <div class="auth-container">
@@ -251,12 +252,28 @@ function showRegisterScreen() {
                 <p class="auth-subtitle">Join thousands of quiz enthusiasts</p>
                 
                 <div class="auth-form">
-                    <input type="text" id="registerName" placeholder="Full Name" class="auth-input">
-                    <input type="email" id="registerEmail" placeholder="Email Address" class="auth-input">
-                    <input type="tel" id="registerMobile" placeholder="Mobile Number" class="auth-input">
-                    <input type="password" id="registerPassword" placeholder="Create Password" class="auth-input">
-                    <input type="password" id="registerConfirm" placeholder="Confirm Password" class="auth-input">
-                    <button onclick="register()" class="auth-btn">Create Account</button>
+                    <input type="text" id="registerName" placeholder="Full Name" class="auth-input" required>
+                    <input type="email" id="registerEmail" placeholder="Email Address" class="auth-input" required>
+                    <div class="input-with-verification">
+                        <input type="tel" id="registerMobile" placeholder="Mobile Number" class="auth-input" required>
+                        <button type="button" id="sendOtpBtn" class="otp-btn" onclick="sendMobileOTP()">Send OTP</button>
+                    </div>
+                    <div class="input-with-verification">
+                        <input type="text" id="mobileOtp" placeholder="Enter Mobile OTP" class="auth-input" disabled>
+                    </div>
+                    <input type="password" id="registerPassword" placeholder="Create Password (min. 6 characters)" class="auth-input" required>
+                    <input type="password" id="registerConfirm" placeholder="Confirm Password" class="auth-input" required>
+                    
+                    <!-- CAPTCHA Section -->
+                    <div class="captcha-container">
+                        <div class="captcha-display">
+                            <span id="captchaText"></span>
+                            <button type="button" onclick="generateCaptcha()" class="refresh-captcha">↻</button>
+                        </div>
+                        <input type="text" id="captchaInput" placeholder="Enter CAPTCHA code" class="auth-input" required>
+                    </div>
+                    
+                    <button onclick="register()" class="auth-btn" id="registerBtn">Create Account</button>
                 </div>
                 
                 <div class="auth-divider">
@@ -269,14 +286,263 @@ function showRegisterScreen() {
             </div>
         </div>
     `;
+    
+    generateCaptcha();
 }
 
-function login() {
-    const email = document.getElementById('loginEmail').value;
-    const password = document.getElementById('loginPassword').value;
+function showLoginScreen() {
+    container.innerHTML = `
+        <div class="auth-container">
+            <div class="auth-box">
+                <div class="auth-header">
+                    <img src="images/company-logo.png" alt="The Conclusion Daily Logo" class="auth-logo">
+                    <h1 class="auth-title">Welcome to The Conclusion Daily! 🎯</h1>
+                </div>
+                <p class="auth-subtitle">Test your knowledge with our interactive quiz</p>
+                
+                <div class="auth-form">
+                    <input type="email" id="loginEmail" placeholder="Enter your email" class="auth-input" required>
+                    <input type="password" id="loginPassword" placeholder="Enter your password" class="auth-input" required>
+                    
+                    <!-- CAPTCHA for Login -->
+                    <div class="captcha-container">
+                        <div class="captcha-display">
+                            <span id="loginCaptchaText"></span>
+                            <button type="button" onclick="generateLoginCaptcha()" class="refresh-captcha">↻</button>
+                        </div>
+                        <input type="text" id="loginCaptchaInput" placeholder="Enter CAPTCHA code" class="auth-input" required>
+                    </div>
+                    
+                    <button onclick="login()" class="auth-btn">Login</button>
+                </div>
+                
+                <div class="auth-divider">
+                    <span>or</span>
+                </div>
+                
+                <button onclick="showRegisterScreen()" class="auth-switch-btn">
+                    Don't have an account? Register
+                </button>
+            </div>
+        </div>
+    `;
     
-    if (!email || !password) {
-        alert('Please enter both email and password');
+    generateLoginCaptcha();
+}
+
+// CAPTCHA Functions
+function generateCaptcha() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+    let captcha = '';
+    for (let i = 0; i < 6; i++) {
+        captcha += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    document.getElementById('captchaText').textContent = captcha;
+    localStorage.setItem('registerCaptcha', captcha);
+}
+
+function generateLoginCaptcha() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+    let captcha = '';
+    for (let i = 0; i < 6; i++) {
+        captcha += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    document.getElementById('loginCaptchaText').textContent = captcha;
+    localStorage.setItem('loginCaptcha', captcha);
+}
+
+// Mobile OTP Simulation (In real app, integrate with SMS service)
+function sendMobileOTP() {
+    const mobileInput = document.getElementById('registerMobile');
+    const mobile = mobileInput.value.trim();
+    
+    // Mobile validation
+    const mobileRegex = /^[6-9]\d{9}$/;
+    if (!mobileRegex.test(mobile)) {
+        alert('Please enter a valid 10-digit Indian mobile number starting with 6-9');
+        return;
+    }
+    
+    // Check if mobile already exists
+    const users = getUsers();
+    if (users.find(u => u.mobile === mobile)) {
+        alert('Mobile number already registered');
+        return;
+    }
+    
+    // Simulate OTP sending (in production, integrate with SMS gateway)
+    const otp = Math.floor(1000 + Math.random() * 9000).toString();
+    localStorage.setItem('mobileOTP', otp);
+    localStorage.setItem('mobileOTPTime', Date.now());
+    localStorage.setItem('mobileToVerify', mobile);
+    
+    // Enable OTP input
+    document.getElementById('mobileOtp').disabled = false;
+    
+    // Disable send button for 60 seconds
+    const sendBtn = document.getElementById('sendOtpBtn');
+    sendBtn.disabled = true;
+    let timeLeft = 60;
+    
+    const timer = setInterval(() => {
+        sendBtn.textContent = `Resend (${timeLeft}s)`;
+        timeLeft--;
+        
+        if (timeLeft < 0) {
+            clearInterval(timer);
+            sendBtn.disabled = false;
+            sendBtn.textContent = 'Resend OTP';
+        }
+    }, 1000);
+    
+    // For demo purposes, show OTP in alert (remove in production)
+    alert(`DEMO: OTP sent to ${mobile}: ${otp}\n\nIn production, this would be sent via SMS`);
+}
+
+function verifyMobileOTP() {
+    const enteredOtp = document.getElementById('mobileOtp').value.trim();
+    const storedOtp = localStorage.getItem('mobileOTP');
+    const otpTime = localStorage.getItem('mobileOTPTime');
+    
+    if (!enteredOtp || !storedOtp) {
+        return { isValid: false, message: 'Please enter OTP' };
+    }
+    
+    // Check if OTP is expired (5 minutes)
+    if (Date.now() - parseInt(otpTime) > 5 * 60 * 1000) {
+        return { isValid: false, message: 'OTP has expired. Please request a new one.' };
+    }
+    
+    if (enteredOtp !== storedOtp) {
+        return { isValid: false, message: 'Invalid OTP' };
+    }
+    
+    return { isValid: true, message: 'Mobile verified successfully' };
+}
+
+// Enhanced Registration with Validation
+function register() {
+    const name = document.getElementById('registerName').value.trim();
+    const email = document.getElementById('registerEmail').value.trim();
+    const mobile = document.getElementById('registerMobile').value.trim();
+    const password = document.getElementById('registerPassword').value;
+    const confirm = document.getElementById('registerConfirm').value;
+    const captchaInput = document.getElementById('captchaInput').value.trim();
+    const storedCaptcha = localStorage.getItem('registerCaptcha');
+    
+    // Basic validation
+    if (!name || !email || !mobile || !password || !confirm || !captchaInput) {
+        alert('Please fill all fields');
+        return;
+    }
+    
+    // Name validation
+    if (name.length < 2) {
+        alert('Please enter a valid name');
+        return;
+    }
+    
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        alert('Please enter a valid email address');
+        return;
+    }
+    
+    // Mobile validation
+    const mobileRegex = /^[6-9]\d{9}$/;
+    if (!mobileRegex.test(mobile)) {
+        alert('Please enter a valid 10-digit Indian mobile number starting with 6-9');
+        return;
+    }
+    
+    // Password validation
+    if (password.length < 6) {
+        alert('Password must be at least 6 characters long');
+        return;
+    }
+    
+    if (password !== confirm) {
+        alert('Passwords do not match');
+        return;
+    }
+    
+    // CAPTCHA verification
+    if (captchaInput !== storedCaptcha) {
+        alert('Invalid CAPTCHA code. Please try again.');
+        generateCaptcha();
+        return;
+    }
+    
+    // Mobile OTP verification
+    const otpVerification = verifyMobileOTP();
+    if (!otpVerification.isValid) {
+        alert(otpVerification.message);
+        return;
+    }
+    
+    const users = getUsers();
+    
+    // Check if email already exists
+    if (users.find(u => u.email === email)) {
+        alert('Email already registered');
+        return;
+    }
+    
+    // Check if mobile already exists
+    if (users.find(u => u.mobile === mobile)) {
+        alert('Mobile number already registered');
+        return;
+    }
+    
+    // Create new user
+    const newUser = {
+        id: Date.now(),
+        name: name,
+        email: email,
+        mobile: mobile,
+        password: password, // In production, hash this password
+        isVerified: true,
+        registeredAt: new Date().toLocaleDateString(),
+        quizResults: []
+    };
+    
+    users.push(newUser);
+    saveUsers(users);
+    
+    // Clear OTP data
+    localStorage.removeItem('mobileOTP');
+    localStorage.removeItem('mobileOTPTime');
+    localStorage.removeItem('mobileToVerify');
+    
+    setCurrentUser(newUser);
+    alert('Registration successful! Welcome to The Conclusion Daily.');
+    showQuiz();
+}
+
+// Enhanced Login with Validation
+function login() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const captchaInput = document.getElementById('loginCaptchaInput').value.trim();
+    const storedCaptcha = localStorage.getItem('loginCaptcha');
+    
+    if (!email || !password || !captchaInput) {
+        alert('Please fill all fields');
+        return;
+    }
+    
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        alert('Please enter a valid email address');
+        return;
+    }
+    
+    // CAPTCHA verification
+    if (captchaInput !== storedCaptcha) {
+        alert('Invalid CAPTCHA code. Please try again.');
+        generateLoginCaptcha();
         return;
     }
     
@@ -286,7 +552,6 @@ function login() {
     if (user) {
         setCurrentUser(user);
         
-        // Check if user has already attempted the quiz
         if (hasUserAttemptedQuiz()) {
             showAlreadyAttemptedScreen();
         } else {
@@ -294,65 +559,8 @@ function login() {
         }
     } else {
         alert('Invalid email or password');
+        generateLoginCaptcha();
     }
-}
-
-function register() {
-    const name = document.getElementById('registerName').value;
-    const email = document.getElementById('registerEmail').value;
-    const mobile = document.getElementById('registerMobile').value;
-    const password = document.getElementById('registerPassword').value;
-    const confirm = document.getElementById('registerConfirm').value;
-    
-    if (!name || !email || !mobile || !password || !confirm) {
-        alert('Please fill all fields');
-        return;
-    }
-    
-    // Mobile number validation
-    const mobileRegex = /^[0-9]{10}$/;
-    if (!mobileRegex.test(mobile)) {
-        alert('Please enter a valid 10-digit mobile number');
-        return;
-    }
-    
-    if (password !== confirm) {
-        alert('Passwords do not match');
-        return;
-    }
-    
-    if (password.length < 6) {
-        alert('Password must be at least 6 characters');
-        return;
-    }
-    
-    const users = getUsers();
-    
-    if (users.find(u => u.email === email)) {
-        alert('Email already registered');
-        return;
-    }
-    
-    // Check if mobile number already exists
-    if (users.find(u => u.mobile === mobile)) {
-        alert('Mobile number already registered');
-        return;
-    }
-    
-    const newUser = {
-        id: Date.now(),
-        name: name,
-        email: email,
-        mobile: mobile,
-        password: password,
-        registeredAt: new Date().toLocaleDateString(),
-        quizResults: []
-    };
-    
-    users.push(newUser);
-    saveUsers(users);
-    setCurrentUser(newUser);
-    showQuiz();
 }
 
 // Screen for users who have already attempted the quiz
