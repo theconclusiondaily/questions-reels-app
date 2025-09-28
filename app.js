@@ -47,7 +47,7 @@ const questions = [
         question: "",
         options: ['1595', '1379', '1437', '1617'],
         image: 'images/Question7.jpg',
-        correctAnswer: 1
+        correctAnswer: 0
     },
     {
         id: 8,
