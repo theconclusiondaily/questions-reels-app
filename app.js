@@ -1,4 +1,4 @@
-// Enhanced Questions Reels App with User Registration
+// Enhanced Questions Reels App with User Registration - One Attempt Only
 const questions = [
     {
         id: 1,
@@ -125,6 +125,16 @@ function saveUserResult(score, total) {
     }
 }
 
+// Check if user has already attempted the quiz
+function hasUserAttemptedQuiz() {
+    if (!currentUser) return false;
+    
+    const users = getUsers();
+    const user = users.find(u => u.email === currentUser.email);
+    
+    return user && user.quizResults && user.quizResults.length > 0;
+}
+
 // Authentication Screens
 function showLoginScreen() {
     container.innerHTML = `
@@ -199,7 +209,13 @@ function login() {
     
     if (user) {
         setCurrentUser(user);
-        showQuiz();
+        
+        // Check if user has already attempted the quiz
+        if (hasUserAttemptedQuiz()) {
+            showAlreadyAttemptedScreen();
+        } else {
+            showQuiz();
+        }
     } else {
         alert('Invalid email or password');
     }
@@ -263,6 +279,49 @@ function register() {
     showQuiz();
 }
 
+// Screen for users who have already attempted the quiz
+function showAlreadyAttemptedScreen() {
+    const userResults = currentUser.quizResults[0]; // Get first attempt
+    
+    container.innerHTML = `
+        <div class="results-container">
+            <div class="results-content">
+                <div class="results-header">
+                    <img src="images/company-logo.png" alt="Company Logo" class="results-logo">
+                    <div class="user-results-header">
+                        <div class="user-greeting">Welcome back, ${currentUser.name}! 👋</div>
+                    </div>
+                </div>
+                
+                <div class="attempted-message">
+                    <div class="attempted-icon">✅</div>
+                    <h2 class="attempted-title">Quiz Already Attempted</h2>
+                    <p class="attempted-text">
+                        You have already completed this quiz. Each user is allowed only one attempt 
+                        to maintain fairness for all participants.
+                    </p>
+                    
+                    <div class="previous-result">
+                        <h3>Your Previous Result:</h3>
+                        <div class="result-summary">
+                            <div class="score-display">
+                                <span class="score">${userResults.score}/${questions.length}</span>
+                                <span class="percentage">(${userResults.percentage}%)</span>
+                            </div>
+                            <div class="attempt-date">Attempted on: ${userResults.date} at ${userResults.time}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="results-actions">
+                    <button class="profile-btn" onclick="showProfile()">View Detailed Profile</button>
+                    <button class="logout-btn" onclick="logout()">Logout</button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
 // Quiz Functions
 function showQuiz() {
     // Reset quiz state
@@ -322,7 +381,7 @@ function showProfile() {
         <div class="profile-container">
             <div class="profile-header">
                 <h1>Your Profile 👤</h1>
-                <button onclick="showQuiz()" class="back-btn">Back to Quiz</button>
+                ${!hasUserAttemptedQuiz() ? '<button onclick="showQuiz()" class="back-btn">Back to Quiz</button>' : ''}
             </div>
             
             <div class="profile-info">
@@ -342,37 +401,52 @@ function showProfile() {
                     <label>Member since:</label>
                     <span>${user.registeredAt}</span>
                 </div>
-            </div>
-            
-            <div class="stats-container">
-                <h2>Quiz Statistics 📊</h2>
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-value">${totalAttempts}</div>
-                        <div class="stat-label">Total Attempts</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">${bestScore}%</div>
-                        <div class="stat-label">Best Score</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">${questions.length}</div>
-                        <div class="stat-label">Questions</div>
-                    </div>
+                <div class="info-item">
+                    <label>Quiz Attempts:</label>
+                    <span>${totalAttempts} / 1</span>
                 </div>
             </div>
             
             ${results.length > 0 ? `
+                <div class="stats-container">
+                    <h2>Quiz Statistics 📊</h2>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value">${totalAttempts}</div>
+                            <div class="stat-label">Total Attempts</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${bestScore}%</div>
+                            <div class="stat-label">Best Score</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${questions.length}</div>
+                            <div class="stat-label">Questions</div>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="attempts-history">
-                    <h3>Recent Attempts</h3>
-                    ${results.slice(-5).reverse().map(result => `
+                    <h3>Your Quiz Attempt</h3>
+                    ${results.map(result => `
                         <div class="attempt-item">
                             <div class="attempt-score">${result.score}/${result.total} (${result.percentage}%)</div>
                             <div class="attempt-date">${result.date} ${result.time}</div>
                         </div>
                     `).join('')}
                 </div>
-            ` : '<p class="no-attempts">No quiz attempts yet. Start your first quiz!</p>'}
+            ` : `
+                <div class="no-attempts-container">
+                    <div class="no-attempts-icon">📝</div>
+                    <h3>Ready to Take the Quiz!</h3>
+                    <p>You haven't attempted the quiz yet. Click the button below to start your one-time attempt.</p>
+                    <button onclick="showQuiz()" class="auth-btn" style="margin-top: 1rem;">Start Quiz</button>
+                </div>
+            `}
+            
+            <div class="profile-actions">
+                <button onclick="logout()" class="logout-btn">Logout</button>
+            </div>
         </div>
     `;
 }
@@ -510,7 +584,7 @@ function showResults() {
     
     const percentage = Math.round((score / questions.length) * 100);
     
-    // Save result for registered users
+    // Save result for registered users (this is their first and only attempt)
     saveUserResult(score, questions.length);
     
     // Build results HTML first
@@ -526,6 +600,14 @@ function showResults() {
                 <div class="results-title">Quiz Completed!</div>
                 <div class="results-score">${score}/${questions.length}</div>
                 <div class="results-percentage">${percentage}% Correct</div>
+                
+                <div class="one-time-message">
+                    <div class="message-icon">🎯</div>
+                    <p class="message-text">
+                        <strong>One Attempt Only:</strong> This was your one and only attempt at this quiz. 
+                        Thank you for participating!
+                    </p>
+                </div>
                 
                 <div class="detailed-results">
                     <h3>Detailed Results:</h3>
@@ -551,21 +633,14 @@ function showResults() {
     resultsHTML += `
                 </div>
                 <div class="results-actions">
-                    <button class="restart-btn" onclick="restartQuiz()">Take Quiz Again</button>
                     <button class="profile-btn" onclick="showProfile()">View Profile</button>
+                    <button class="logout-btn" onclick="logout()">Logout</button>
                 </div>
             </div>
         </div>
     `;
     
     container.innerHTML = resultsHTML;
-}
-
-function restartQuiz() {
-    currentQuestion = 0;
-    userAnswers = [];
-    score = 0;
-    showQuiz();
 }
 
 // Make functions globally available
@@ -578,7 +653,7 @@ window.showLoginScreen = showLoginScreen;
 window.showRegisterScreen = showRegisterScreen;
 window.login = login;
 window.register = register;
-window.restartQuiz = restartQuiz;
+window.showAlreadyAttemptedScreen = showAlreadyAttemptedScreen;
 
 // Initialize app
 function initApp() {
@@ -586,7 +661,13 @@ function initApp() {
     const user = getCurrentUser();
     if (user) {
         currentUser = user;
-        showQuiz();
+        
+        // Check if user has already attempted the quiz
+        if (hasUserAttemptedQuiz()) {
+            showAlreadyAttemptedScreen();
+        } else {
+            showQuiz();
+        }
     } else {
         showLoginScreen();
     }
