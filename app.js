@@ -122,6 +122,10 @@ function saveUserResult(score, total) {
         });
         
         saveUsers(users);
+        
+        // Update currentUser with the new results
+        currentUser = users[userIndex];
+        setCurrentUser(currentUser);
     }
 }
 
@@ -323,7 +327,13 @@ function showAlreadyAttemptedScreen() {
 }
 
 // Quiz Functions
-function showQuiz() {
+function showQuiz()
+    {
+    // Safety check - prevent quiz if user already attempted
+    if (hasUserAttemptedQuiz()) {
+        showAlreadyAttemptedScreen();
+        return;
+    }
     // Reset quiz state
     currentQuestion = 0;
     userAnswers = [];
@@ -373,15 +383,20 @@ function showQuiz() {
 
 function showProfile() {
     const user = currentUser;
-    const results = user.quizResults || [];
+    const users = getUsers(); // Get updated users data
+    const currentUserData = users.find(u => u.email === user.email);
+    const results = currentUserData?.quizResults || [];
     const bestScore = results.length > 0 ? Math.max(...results.map(r => r.percentage)) : 0;
     const totalAttempts = results.length;
     
+    // Check if user has attempted the quiz
+    const hasAttempted = totalAttempts > 0;
+
     container.innerHTML = `
         <div class="profile-container">
             <div class="profile-header">
                 <h1>Your Profile 👤</h1>
-                ${!hasUserAttemptedQuiz() ? '<button onclick="showQuiz()" class="back-btn">Back to Quiz</button>' : ''}
+                ${!hasAttempted ? '<button onclick="showQuiz()" class="back-btn">Back to Quiz</button>' : ''}
             </div>
             
             <div class="profile-info">
@@ -407,7 +422,7 @@ function showProfile() {
                 </div>
             </div>
             
-            ${results.length > 0 ? `
+            ${hasAttempted ? `
                 <div class="stats-container">
                     <h2>Quiz Statistics 📊</h2>
                     <div class="stats-grid">
@@ -662,8 +677,12 @@ function initApp() {
     if (user) {
         currentUser = user;
         
-        // Check if user has already attempted the quiz
-        if (hasUserAttemptedQuiz()) {
+        // Get fresh user data from storage
+        const users = getUsers();
+        const currentUserData = users.find(u => u.email === user.email);
+        
+        // Check if user has already attempted the quiz using fresh data
+        if (currentUserData?.quizResults && currentUserData.quizResults.length > 0) {
             showAlreadyAttemptedScreen();
         } else {
             showQuiz();
