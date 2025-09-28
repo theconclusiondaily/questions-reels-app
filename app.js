@@ -263,13 +263,8 @@ function register() {
     showQuiz();
 }
 
-// Quiz Functions - FIXED VERSION
+// Quiz Functions
 function showQuiz() {
-    // Reset quiz state
-    currentQuestion = 0;
-    userAnswers = [];
-    score = 0;
-    
     container.innerHTML = `
         <div class="quiz-header">
             <div class="header-left">
@@ -315,8 +310,6 @@ function showQuiz() {
 function showQuestion(index) {
     if (index < 0 || index >= questions.length) return;
     
-    console.log('Showing question:', index); // Debug log
-    
     // Hide all slides
     document.querySelectorAll('.question-slide').forEach(slide => {
         slide.style.display = 'none';
@@ -326,23 +319,15 @@ function showQuestion(index) {
     const currentSlide = document.getElementById(`slide-${index}`);
     if (currentSlide) {
         currentSlide.style.display = 'flex';
-        console.log('Slide displayed:', currentSlide.id); // Debug log
-    } else {
-        console.error('Slide not found:', `slide-${index}`); // Debug log
     }
     
     currentQuestion = index;
     updateProgressBar();
 }
 
-// FIXED OPTION SELECTION FUNCTION
 function selectOption(questionIndex, optionIndex) {
-    console.log('Option selected:', questionIndex, optionIndex); // Debug log
-    
     const question = questions[questionIndex];
     const buttons = document.querySelectorAll(`#slide-${questionIndex} .option-btn`);
-    
-    console.log('Buttons found:', buttons.length); // Debug log
     
     // Remove all selections
     buttons.forEach(btn => {
@@ -355,16 +340,27 @@ function selectOption(questionIndex, optionIndex) {
     // Store user answer
     userAnswers[questionIndex] = optionIndex;
     
-    console.log('User answers:', userAnswers); // Debug log
+    // Show correct/wrong with colors
+    setTimeout(() => {
+        buttons[question.correctAnswer].classList.add('correct');
+        if (optionIndex !== question.correctAnswer) {
+            buttons[optionIndex].classList.add('wrong');
+        }
+        
+        // Calculate score
+        if (optionIndex === question.correctAnswer) {
+            score++;
+        }
+    }, 500);
     
-    // Auto move to next question after 1 second (no answer reveal)
+    // Auto move to next question after 2 seconds
     setTimeout(() => {
         if (questionIndex < questions.length - 1) {
             showQuestion(questionIndex + 1);
         } else {
             showResults();
         }
-    }, 1000);
+    }, 2000);
 }
 
 function updateProgressBar() {
@@ -379,14 +375,11 @@ function setupSwipeGestures() {
     let startY = 0;
     let endY = 0;
     
-    const reelContainer = document.querySelector('.reels-container');
-    if (!reelContainer) return;
-    
-    reelContainer.addEventListener('touchstart', (e) => {
+    container.addEventListener('touchstart', (e) => {
         startY = e.touches[0].clientY;
     });
     
-    reelContainer.addEventListener('touchend', (e) => {
+    container.addEventListener('touchend', (e) => {
         endY = e.changedTouches[0].clientY;
         handleSwipe();
     });
@@ -395,12 +388,15 @@ function setupSwipeGestures() {
         const diff = startY - endY;
         
         if (diff > 50 && currentQuestion < questions.length - 1) {
+            // Swipe up - next question
             showQuestion(currentQuestion + 1);
         } else if (diff < -50 && currentQuestion > 0) {
+            // Swipe down - previous question
             showQuestion(currentQuestion - 1);
         }
     }
     
+    // Mouse wheel for desktop
     document.addEventListener('wheel', (e) => {
         e.preventDefault();
         if (e.deltaY > 50 && currentQuestion < questions.length - 1) {
@@ -412,21 +408,15 @@ function setupSwipeGestures() {
 }
 
 function showResults() {
-    // Calculate score
-    score = 0;
-    for (let i = 0; i < questions.length; i++) {
-        if (userAnswers[i] === questions[i].correctAnswer) {
-            score++;
-        }
-    }
-    
     const percentage = Math.round((score / questions.length) * 100);
+    let message = '';
     
-    // Save result for registered users
-    saveUserResult(score, questions.length);
+    if (percentage >= 80) message = 'Excellent! 🎉';
+    else if (percentage >= 60) message = 'Great job! 👍';
+    else if (percentage >= 40) message = 'Good effort! 😊';
+    else message = 'Keep practicing! 💪';
     
-    // Create results HTML
-    let resultsHTML = `
+    container.innerHTML = `
         <div class="results-container">
             <div class="results-content">
                 <div class="results-header">
@@ -448,7 +438,7 @@ function showResults() {
         const userAnswer = userAnswers[index];
         const isCorrect = userAnswer === question.correctAnswer;
         
-        resultsHTML += `
+        container.innerHTML += `
             <div class="result-item ${isCorrect ? 'correct' : 'incorrect'}">
                 <div class="result-question">Q${index + 1}: ${question.question || 'Question ' + (index + 1)}</div>
                 <div class="result-answer">
@@ -460,7 +450,7 @@ function showResults() {
         `;
     });
     
-    resultsHTML += `
+    container.innerHTML += `
                 </div>
                 <div class="results-actions">
                     <button class="restart-btn" onclick="restartQuiz()">Take Quiz Again</button>
@@ -469,8 +459,6 @@ function showResults() {
             </div>
         </div>
     `;
-    
-    container.innerHTML = resultsHTML;
 }
 
 function showProfile() {
@@ -545,17 +533,6 @@ function restartQuiz() {
     showQuiz();
 }
 
-// Initialize app
-function initApp() {
-    const user = getCurrentUser();
-    if (user) {
-        currentUser = user;
-        showQuiz();
-    } else {
-        showLoginScreen();
-    }
-}
-
 // Make functions globally available
 window.showQuiz = showQuiz;
 window.showQuestion = showQuestion;
@@ -567,5 +544,16 @@ window.showRegisterScreen = showRegisterScreen;
 window.login = login;
 window.register = register;
 window.restartQuiz = restartQuiz;
+
+// Initialize app
+function initApp() {
+    const user = getCurrentUser();
+    if (user) {
+        currentUser = user;
+        showQuiz();
+    } else {
+        showLoginScreen();
+    }
+}
 
 window.onload = initApp;
