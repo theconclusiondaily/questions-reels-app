@@ -1,3 +1,13 @@
+// Emergency error handler
+window.onerror = function(msg, url, lineNo, columnNo, error) {
+    console.error('Error: ' + msg + '\nURL: ' + url + '\nLine: ' + lineNo);
+    document.body.innerHTML = '<div style="padding: 20px; color: red;"><h1>App Error</h1><p>Check console (F12) for details</p></div>';
+    return false;
+};
+
+// Test if app loads
+console.log('🔧 App starting...');
+alert('App is loading - if you see this, JavaScript is working');
 // Enhanced Questions Reels App with User Registration - One Attempt Only
 const questions = [
     {
