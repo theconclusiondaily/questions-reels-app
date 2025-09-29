@@ -254,6 +254,13 @@ function showLoginScreen() {
                     </div>
                     
                     <button onclick="login()" class="auth-btn">Login</button>
+                    
+                    <!-- Forgot Password Link -->
+                    <div class="forgot-password-container">
+                        <button onclick="showForgotPasswordScreen()" class="forgot-password-btn">
+                            Forgot Password?
+                        </button>
+                    </div>
                 </div>
                 
                 <div class="auth-divider">
@@ -268,6 +275,70 @@ function showLoginScreen() {
     `;
     
     generateLoginCaptcha();
+}
+// Forgot Password Flow
+function showForgotPasswordScreen() {
+    container.innerHTML = `
+        <div class="auth-container">
+            <div class="auth-box">
+                <div class="auth-header">
+                    <img src="images/company-logo.png" alt="Company Logo" class="auth-logo">
+                    <h1 class="auth-title">Reset Password 🔑</h1>
+                </div>
+                <p class="auth-subtitle">Enter your email to receive a password reset OTP</p>
+                
+                <div class="auth-form">
+                    <input type="email" id="forgotEmail" placeholder="Enter your registered email" class="auth-input" required>
+                    
+                    <button onclick="sendPasswordResetOTP()" class="auth-btn" id="sendResetOtpBtn">
+                        Send Reset OTP
+                    </button>
+                </div>
+                
+                <div class="auth-divider">
+                    <span>or</span>
+                </div>
+                
+                <button onclick="showLoginScreen()" class="auth-switch-btn">
+                    Back to Login
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+function showResetPasswordScreen() {
+    container.innerHTML = `
+        <div class="auth-container">
+            <div class="auth-box">
+                <div class="auth-header">
+                    <img src="images/company-logo.png" alt="Company Logo" class="auth-logo">
+                    <h1 class="auth-title">Set New Password 🔑</h1>
+                </div>
+                <p class="auth-subtitle">Enter the OTP and your new password</p>
+                
+                <div class="auth-form">
+                    <div class="input-with-verification">
+                        <input type="text" id="resetOtp" placeholder="Enter Reset OTP" class="auth-input" required>
+                    </div>
+                    <input type="password" id="newPassword" placeholder="New Password (min. 8 characters)" class="auth-input" required>
+                    <input type="password" id="confirmNewPassword" placeholder="Confirm New Password" class="auth-input" required>
+                    
+                    <button onclick="resetPassword()" class="auth-btn" id="resetPasswordBtn">
+                        Reset Password
+                    </button>
+                </div>
+                
+                <div class="auth-divider">
+                    <span>or</span>
+                </div>
+                
+                <button onclick="showForgotPasswordScreen()" class="auth-switch-btn">
+                    Resend OTP
+                </button>
+            </div>
+        </div>
+    `;
 }
 // Enhanced authentication with validation and CAPTCHA
 function showRegisterScreen() {
@@ -318,7 +389,176 @@ function showRegisterScreen() {
     
     generateCaptcha();
 }
+// Forgot Password Functions
+async function sendPasswordResetOTP() {
+    const sendBtn = document.getElementById('sendResetOtpBtn');
+    const email = document.getElementById('forgotEmail').value.trim().toLowerCase();
+    
+    try {
+        sendBtn.disabled = true;
+        sendBtn.textContent = 'Sending OTP...';
 
+        // Email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            alert('Please enter a valid email address');
+            return;
+        }
+
+        // Check if user exists
+        const users = getUsers();
+        const user = users.find(u => u.email === email);
+        
+        if (!user) {
+            alert('No account found with this email address');
+            return;
+        }
+
+        // Generate reset OTP
+        const resetOtp = Math.floor(100000 + Math.random() * 900000).toString();
+        
+        // Store reset OTP data
+        localStorage.setItem('resetOTP', resetOtp);
+        localStorage.setItem('resetOTPTime', Date.now());
+        localStorage.setItem('resetEmail', email);
+        localStorage.setItem('resetOTPType', 'password_reset');
+
+        // Simulate sending reset OTP
+        const smsResult = await sendResetSMS(user.mobile, resetOtp);
+        
+        if (smsResult.success) {
+            alert(`Password reset OTP sent to your registered mobile number ending with ${user.mobile.slice(-4)}`);
+            showResetPasswordScreen();
+            trackEvent('password_reset_otp_sent');
+        } else {
+            throw new Error(smsResult.error || 'Failed to send reset OTP');
+        }
+
+    } catch (error) {
+        console.error('Password reset OTP error:', error);
+        alert('Failed to send reset OTP. Please try again.');
+    } finally {
+        sendBtn.disabled = false;
+        sendBtn.textContent = 'Send Reset OTP';
+    }
+}
+
+async function sendResetSMS(mobile, otp) {
+    // Simulate SMS sending for password reset
+    console.log(`[Password Reset SMS] OTP ${otp} sent to ${mobile}`);
+    
+    // DEMO: Show OTP in alert
+    alert(`DEMO: Password Reset OTP sent to ${mobile}: ${otp}\n\nIn production, this would be sent via SMS`);
+    
+    return { success: true, messageId: 'reset_simulated_' + Date.now() };
+}
+
+async function resetPassword() {
+    const resetBtn = document.getElementById('resetPasswordBtn');
+    
+    try {
+        resetBtn.disabled = true;
+        resetBtn.textContent = 'Resetting Password...';
+
+        const otp = document.getElementById('resetOtp').value.trim();
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmPassword = document.getElementById('confirmNewPassword').value;
+        
+        const storedOtp = localStorage.getItem('resetOTP');
+        const otpTime = localStorage.getItem('resetOTPTime');
+        const email = localStorage.getItem('resetEmail');
+
+        // Validation
+        if (!otp || !newPassword || !confirmPassword) {
+            alert('Please fill all fields');
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            alert('Passwords do not match');
+            return;
+        }
+
+        if (newPassword.length < CONFIG.PASSWORD_MIN_LENGTH) {
+            alert(`Password must be at least ${CONFIG.PASSWORD_MIN_LENGTH} characters long`);
+            return;
+        }
+
+        if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(newPassword)) {
+            alert('Password must contain at least one uppercase letter, one lowercase letter, and one number');
+            return;
+        }
+
+        // Verify OTP
+        if (!storedOtp || otp !== storedOtp) {
+            alert('Invalid OTP');
+            return;
+        }
+
+        // Check if OTP is expired (10 minutes for password reset)
+        if (Date.now() - parseInt(otpTime) > 10 * 60 * 1000) {
+            alert('OTP has expired. Please request a new one.');
+            return;
+        }
+
+        // Update user password
+        const users = getUsers();
+        const userIndex = users.findIndex(u => u.email === email);
+        
+        if (userIndex === -1) {
+            alert('User not found');
+            return;
+        }
+
+        // Hash new password
+        const hashedPassword = await hashPassword(newPassword);
+        users[userIndex].password = hashedPassword;
+        users[userIndex].lastPasswordReset = new Date().toISOString();
+
+        if (saveUsers(users)) {
+            // Clear reset data
+            localStorage.removeItem('resetOTP');
+            localStorage.removeItem('resetOTPTime');
+            localStorage.removeItem('resetEmail');
+            localStorage.removeItem('resetOTPType');
+            
+            alert('✅ Password reset successfully! You can now login with your new password.');
+            trackEvent('password_reset_success');
+            showLoginScreen();
+        } else {
+            throw new Error('Failed to save new password');
+        }
+
+    } catch (error) {
+        console.error('Password reset error:', error);
+        alert('Password reset failed. Please try again.');
+        trackEvent('password_reset_failed', { error: error.message });
+    } finally {
+        resetBtn.disabled = false;
+        resetBtn.textContent = 'Reset Password';
+    }
+}
+
+// Enhanced password validation function
+function validatePassword(password) {
+    if (password.length < CONFIG.PASSWORD_MIN_LENGTH) {
+        return { isValid: false, message: `Password must be at least ${CONFIG.PASSWORD_MIN_LENGTH} characters long` };
+    }
+
+    if (!/(?=.*[a-z])/.test(password)) {
+        return { isValid: false, message: 'Password must contain at least one lowercase letter' };
+    }
+
+    if (!/(?=.*[A-Z])/.test(password)) {
+        return { isValid: false, message: 'Password must contain at least one uppercase letter' };
+    }
+
+    if (!/(?=.*\d)/.test(password)) {
+        return { isValid: false, message: 'Password must contain at least one number' };
+    }
+
+    return { isValid: true, message: 'Password is valid' };
+}
 // CAPTCHA Functions
 function generateCaptcha() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
@@ -1103,7 +1343,7 @@ function showProfile() {
     `;
 }
 
-// Make functions globally available
+// Make functions globally available {
 window.showQuiz = showQuiz;
 window.showQuestion = showQuestion;
 window.selectOption = selectOption;
@@ -1116,10 +1356,15 @@ window.showRegisterScreen = showRegisterScreen;
 window.login = login;
 window.register = register;
 window.showAlreadyAttemptedScreen = showAlreadyAttemptedScreen;
-// ADD THESE NEW FUNCTIONS:
 window.sendMobileOTP = sendMobileOTP;
 window.generateCaptcha = generateCaptcha;
 window.generateLoginCaptcha = generateLoginCaptcha;
+
+// ADD FORGOT PASSWORD FUNCTIONS:{
+window.showForgotPasswordScreen = showForgotPasswordScreen;
+window.showResetPasswordScreen = showResetPasswordScreen;
+window.sendPasswordResetOTP = sendPasswordResetOTP;
+window.resetPassword = resetPassword;
 
 // Initialize app
 function initApp() {
