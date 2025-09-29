@@ -1343,7 +1343,7 @@ function showProfile() {
     `;
 }
 
-// Make functions globally available {
+// Make functions globally available
 window.showQuiz = showQuiz;
 window.showQuestion = showQuestion;
 window.selectOption = selectOption;
@@ -1360,7 +1360,7 @@ window.sendMobileOTP = sendMobileOTP;
 window.generateCaptcha = generateCaptcha;
 window.generateLoginCaptcha = generateLoginCaptcha;
 
-// ADD FORGOT PASSWORD FUNCTIONS:{
+// ADD FORGOT PASSWORD FUNCTIONS:
 window.showForgotPasswordScreen = showForgotPasswordScreen;
 window.showResetPasswordScreen = showResetPasswordScreen;
 window.sendPasswordResetOTP = sendPasswordResetOTP;
