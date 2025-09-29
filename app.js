@@ -1,13 +1,3 @@
-// Emergency error handler
-window.onerror = function(msg, url, lineNo, columnNo, error) {
-    console.error('Error: ' + msg + '\nURL: ' + url + '\nLine: ' + lineNo);
-    document.body.innerHTML = '<div style="padding: 20px; color: red;"><h1>App Error</h1><p>Check console (F12) for details</p></div>';
-    return false;
-};
-
-// Test if app loads
-console.log('🔧 App starting...');
-alert('App is loading - if you see this, JavaScript is working');
 // Enhanced Questions Reels App with User Registration - One Attempt Only
 const questions = [
     {
@@ -240,7 +230,6 @@ function autoSubmitQuiz() {
     saveUserResult(score, questions.length, timeUsed);
     showSubmissionPage(timeUsed);
 }
-// Authentication Screens
 function showLoginScreen() {
     container.innerHTML = `
         <div class="auth-container">
@@ -252,8 +241,18 @@ function showLoginScreen() {
                 <p class="auth-subtitle">Test your knowledge with our interactive quiz</p>
                 
                 <div class="auth-form">
-                    <input type="email" id="loginEmail" placeholder="Enter your email" class="auth-input">
-                    <input type="password" id="loginPassword" placeholder="Enter your password" class="auth-input">
+                    <input type="email" id="loginEmail" placeholder="Enter your email" class="auth-input" required>
+                    <input type="password" id="loginPassword" placeholder="Enter your password" class="auth-input" required>
+                    
+                    <!-- CAPTCHA for Login -->
+                    <div class="captcha-container">
+                        <div class="captcha-display">
+                            <span id="loginCaptchaText"></span>
+                            <button type="button" onclick="generateLoginCaptcha()" class="refresh-captcha">↻</button>
+                        </div>
+                        <input type="text" id="loginCaptchaInput" placeholder="Enter CAPTCHA code" class="auth-input" required>
+                    </div>
+                    
                     <button onclick="login()" class="auth-btn">Login</button>
                 </div>
                 
@@ -267,8 +266,9 @@ function showLoginScreen() {
             </div>
         </div>
     `;
+    
+    generateLoginCaptcha();
 }
-
 // Enhanced authentication with validation and CAPTCHA
 function showRegisterScreen() {
     container.innerHTML = `
