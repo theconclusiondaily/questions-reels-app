@@ -1532,3 +1532,46 @@ body {
     background-repeat: no-repeat;
     background-position: center;
 }
+/* Forgot Password Styles */
+.forgot-password-container {
+    text-align: center;
+    margin-top: 1rem;
+}
+
+.forgot-password-btn {
+    background: none;
+    border: none;
+    color: #667eea;
+    cursor: pointer;
+    font-size: 0.9rem;
+    text-decoration: underline;
+    transition: color 0.3s ease;
+}
+
+.forgot-password-btn:hover {
+    color: #5a6fd8;
+}
+
+.password-reset-info {
+    background: #e3f2fd;
+    border: 1px solid #2196F3;
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+    color: #1565C0;
+}
+
+.reset-success {
+    background: #e8f5e8;
+    border: 1px solid #4CAF50;
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+    margin: 1rem 0;
+}
+
+.reset-success-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
