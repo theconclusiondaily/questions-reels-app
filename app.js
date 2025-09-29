@@ -309,46 +309,6 @@ function showRegisterScreen() {
     generateCaptcha();
 }
 
-function showLoginScreen() {
-    container.innerHTML = `
-        <div class="auth-container">
-            <div class="auth-box">
-                <div class="auth-header">
-                    <img src="images/company-logo.png" alt="The Conclusion Daily Logo" class="auth-logo">
-                    <h1 class="auth-title">Welcome to The Conclusion Daily! 🎯</h1>
-                </div>
-                <p class="auth-subtitle">Test your knowledge with our interactive quiz</p>
-                
-                <div class="auth-form">
-                    <input type="email" id="loginEmail" placeholder="Enter your email" class="auth-input" required>
-                    <input type="password" id="loginPassword" placeholder="Enter your password" class="auth-input" required>
-                    
-                    <!-- CAPTCHA for Login -->
-                    <div class="captcha-container">
-                        <div class="captcha-display">
-                            <span id="loginCaptchaText"></span>
-                            <button type="button" onclick="generateLoginCaptcha()" class="refresh-captcha">↻</button>
-                        </div>
-                        <input type="text" id="loginCaptchaInput" placeholder="Enter CAPTCHA code" class="auth-input" required>
-                    </div>
-                    
-                    <button onclick="login()" class="auth-btn">Login</button>
-                </div>
-                
-                <div class="auth-divider">
-                    <span>or</span>
-                </div>
-                
-                <button onclick="showRegisterScreen()" class="auth-switch-btn">
-                    Don't have an account? Register
-                </button>
-            </div>
-        </div>
-    `;
-    
-    generateLoginCaptcha();
-}
-
 // CAPTCHA Functions
 function generateCaptcha() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
