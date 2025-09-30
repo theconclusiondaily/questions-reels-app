@@ -119,7 +119,52 @@ let currentUser = null;
 let quizTimer = null;
 let timeLeft = 1800; // 30 minutes in seconds
 const container = document.getElementById('root');
+// ===================== SECURITY ENHANCEMENTS =====================
+// ADD THIS SECURITY CONFIG RIGHT HERE:
+const SECURITY_CONFIG = {
+    // Input validation limits
+    MAX_EMAIL_LENGTH: 254,
+    MAX_NAME_LENGTH: 100,
+    MAX_MOBILE_LENGTH: 10,
+    
+    // Rate limiting
+    MAX_LOGIN_ATTEMPTS: 5,
+    LOGIN_TIMEOUT: 15 * 60 * 1000, // 15 minutes
+    MAX_REQUESTS_PER_MINUTE: 60,
+    OTP_ATTEMPTS: 3,
+    
+    // Session management
+    SESSION_TIMEOUT: 30 * 60 * 1000, // 30 minutes
+    MAX_SESSIONS: 3
+};
 
+// Security functions
+function sanitizeInput(input) {
+    if (typeof input !== 'string') return '';
+    return input
+        .trim()
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#x27;')
+        .replace(/\//g, '&#x2F;')
+        .replace(/\\/g, '&#x5C;')
+        .replace(/`/g, '&#96;');
+}
+
+function validateEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email) && email.length <= SECURITY_CONFIG.MAX_EMAIL_LENGTH;
+}
+
+function validateMobile(mobile) {
+    return /^[6-9]\d{9}$/.test(mobile) && mobile.length === SECURITY_CONFIG.MAX_MOBILE_LENGTH;
+}
+
+// XSS Protection
+function safeInnerHTML(element, content) {
+    element.textContent = content;
+}
 // Production Configuration
 const CONFIG = {
     OTP_EXPIRY_TIME: 5 * 60 * 1000, // 5 minutes
@@ -127,7 +172,51 @@ const CONFIG = {
     PASSWORD_MIN_LENGTH: 8,
     SESSION_TIMEOUT: 30 * 60 * 1000 // 30 minutes
 };
+// Rate limiting storage
+function checkRateLimit(key, maxAttempts, windowMs) {
+    try {
+        const now = Date.now();
+        const attempts = JSON.parse(localStorage.getItem(`rate_limit_${key}`) || '[]');
+        
+        // Remove expired attempts
+        const recentAttempts = attempts.filter(time => now - time < windowMs);
+        
+        if (recentAttempts.length >= maxAttempts) {
+            return false;
+        }
+        
+        recentAttempts.push(now);
+        localStorage.setItem(`rate_limit_${key}`, JSON.stringify(recentAttempts));
+        return true;
+    } catch (error) {
+        console.error('Rate limit error:', error);
+        return true; // Fail open to avoid blocking legitimate users
+    }
+}
 
+// Clear expired rate limits
+function cleanupRateLimits() {
+    const now = Date.now();
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('rate_limit_')) {
+            try {
+                const attempts = JSON.parse(localStorage.getItem(key));
+                const recentAttempts = attempts.filter(time => now - time < 24 * 60 * 60 * 1000);
+                if (recentAttempts.length === 0) {
+                    localStorage.removeItem(key);
+                } else {
+                    localStorage.setItem(key, JSON.stringify(recentAttempts));
+                }
+            } catch (e) {
+                localStorage.removeItem(key);
+            }
+        }
+    }
+}
+
+// Run cleanup every hour
+setInterval(cleanupRateLimits, 60 * 60 * 1000);
 // Production User Management Functions
 function getUsers() {
     try {
@@ -158,14 +247,183 @@ function setCurrentUser(user) {
 }
 
 function logout() {
+    const session = JSON.parse(localStorage.getItem('currentSession') || '{}');
+    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    
+    logSecurityEvent('logout', { 
+        email: currentUser.email,
+        sessionId: session.id,
+        reason: 'user_action'
+    });
+    
+    // Clear session data
+    localStorage.removeItem('currentSession');
+    localStorage.removeItem('currentUser');
+    currentUser = null;
+    
     if (quizTimer) {
         clearInterval(quizTimer);
     }
+    
+    showLoginScreen();
+}
+// Session Security Functions
+function generateSessionId() {
+    return 'session_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+}
+
+function initSession(userData) {
+    const sessionId = generateSessionId();
+    const sessionData = {
+        id: sessionId,
+        created: Date.now(),
+        lastActivity: Date.now(),
+        ip: 'unknown',
+        userAgent: navigator.userAgent,
+        userId: userData.email
+    };
+    
+    localStorage.setItem('currentSession', JSON.stringify(sessionData));
+    
+    // Log session start
+    logSecurityEvent('session_start', { 
+        email: userData.email,
+        sessionId: sessionId 
+    });
+    
+    return sessionId;
+}
+
+function validateSession() {
+    try {
+        const sessionStr = localStorage.getItem('currentSession');
+        const currentUserStr = localStorage.getItem('currentUser');
+        
+        if (!sessionStr || !currentUserStr) {
+            return false;
+        }
+        
+        const session = JSON.parse(sessionStr);
+        const currentUser = JSON.parse(currentUserStr);
+        
+        // Check session timeout
+        if (Date.now() - session.lastActivity > SECURITY_CONFIG.SESSION_TIMEOUT) {
+            logSecurityEvent('session_timeout', { 
+                email: currentUser.email,
+                sessionId: session.id 
+            });
+            return false;
+        }
+        
+        // Update last activity
+        session.lastActivity = Date.now();
+        localStorage.setItem('currentSession', JSON.stringify(session));
+        
+        return true;
+    } catch (error) {
+        console.error('Session validation error:', error);
+        return false;
+    }
+}
+
+// Enhanced logout with session cleanup
+function secureLogout() {
+    const session = JSON.parse(localStorage.getItem('currentSession') || '{}');
+    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    
+    logSecurityEvent('logout', { 
+        email: currentUser.email,
+        sessionId: session.id,
+        reason: 'user_action'
+    });
+    
+    // Clear session data
+    localStorage.removeItem('currentSession');
     localStorage.removeItem('currentUser');
     currentUser = null;
+    
+    if (quizTimer) {
+        clearInterval(quizTimer);
+    }
+    
     showLoginScreen();
 }
 
+// Update activity on user interaction
+document.addEventListener('click', () => {
+    if (localStorage.getItem('currentSession')) {
+        validateSession();
+    }
+});
+
+document.addEventListener('keypress', () => {
+    if (localStorage.getItem('currentSession')) {
+        validateSession();
+    }
+});
+
+// Auto-logout timer
+setInterval(() => {
+    if (localStorage.getItem('currentSession') && !validateSession()) {
+        alert('Session expired. Please login again.');
+        secureLogout();
+    }
+}, 60000); // Check every minute
+// Security audit logging
+function logSecurityEvent(event, details = {}) {
+    try {
+        const auditLog = JSON.parse(localStorage.getItem('security_audit') || '[]');
+        const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+        
+        const logEntry = {
+            timestamp: new Date().toISOString(),
+            event: event,
+            details: details,
+            user: currentUser.email || 'anonymous',
+            ip: details.ip || 'unknown',
+            userAgent: navigator.userAgent
+        };
+        
+        auditLog.unshift(logEntry);
+        
+        // Keep only last 1000 events
+        if (auditLog.length > 1000) {
+            auditLog.splice(1000);
+        }
+        
+        localStorage.setItem('security_audit', JSON.stringify(auditLog));
+        
+        // Also log to console for debugging
+        console.log('🔒 Security Event:', event, details);
+    } catch (error) {
+        console.error('Failed to log security event:', error);
+    }
+}
+
+// Log important events throughout your application
+// Add these calls to relevant functions:
+
+// In registration success:
+// logSecurityEvent('user_registration', { email: userData.email });
+
+// In login (both success and failure):
+// logSecurityEvent('login_attempt', { email: email, success: loginSuccessful });
+
+// In password change:
+// logSecurityEvent('password_change', { user: currentUser.email });
+
+// In quiz submission:
+// logSecurityEvent('quiz_submission', { 
+//     user: currentUser.email, 
+//     score: score,
+//     quizId: quizId
+// });
+
+// In logout:
+// logSecurityEvent('logout', { user: currentUser.email });
+
+// In session timeout:
+// logSecurityEvent('session_timeout', { user: currentUser.email });
 function saveUserResult(score, total, timeUsed) {
     if (!currentUser) return;
     
@@ -308,6 +566,125 @@ function autoSubmitQuiz() {
     const timeUsed = timeLeft; // All time used when auto-submitted
     saveUserResult(score, questions.length, timeUsed);
     showSubmissionPage(timeUsed);
+}
+/ === AUTOMATIC DATA STORAGE FUNCTIONS === //
+
+// Store complete user registration data in analytics
+function storeUserInAnalytics(userData) {
+    try {
+        // Get existing analytics data
+        const analyticsData = JSON.parse(localStorage.getItem('adminAnalytics')) || {
+            users: [],
+            quizAttempts: [],
+            summary: {
+                totalUsers: 0,
+                totalAttempts: 0,
+                averageScore: 0,
+                registrationDates: []
+            }
+        };
+        
+        // Store user data (without password for security)
+        const userAnalytics = {
+            userId: userData.id,
+            email: userData.email,
+            name: userData.name,
+            mobile: userData.mobile,
+            registrationDate: userData.registrationDate,
+            registrationIP: userData.registrationIP || 'unknown',
+            deviceInfo: userData.deviceInfo || 'unknown',
+            isActive: userData.isActive
+        };
+        
+        // Check if user already exists in analytics
+        const existingUserIndex = analyticsData.users.findIndex(u => u.userId === userData.id);
+        if (existingUserIndex === -1) {
+            analyticsData.users.push(userAnalytics);
+            analyticsData.summary.totalUsers = analyticsData.users.length;
+            analyticsData.summary.registrationDates.push(userData.registrationDate);
+        }
+        
+        // Save updated analytics
+        localStorage.setItem('adminAnalytics', JSON.stringify(analyticsData));
+        console.log('✅ User data stored in admin analytics:', userData.email);
+        
+    } catch (error) {
+        console.error('Error storing user in analytics:', error);
+    }
+}
+
+// Store quiz results in analytics
+function storeQuizResultsInAnalytics(score, timeUsed) {
+    if (!currentUser) return;
+    
+    try {
+        const analyticsData = JSON.parse(localStorage.getItem('adminAnalytics')) || {
+            users: [],
+            quizAttempts: [],
+            summary: {
+                totalUsers: 0,
+                totalAttempts: 0,
+                averageScore: 0,
+                registrationDates: []
+            }
+        };
+        
+        const quizResult = {
+            attemptId: Date.now(),
+            userId: currentUser.id,
+            userEmail: currentUser.email,
+            userName: currentUser.name,
+            userMobile: currentUser.mobile,
+            score: score,
+            totalQuestions: questions.length,
+            percentage: Math.round((score / questions.length) * 100),
+            timeUsed: timeUsed,
+            date: new Date().toLocaleDateString(),
+            time: new Date().toLocaleTimeString(),
+            timestamp: new Date().toISOString(),
+            answers: userAnswers,
+            detailedResults: questions.map((q, index) => ({
+                questionId: q.id,
+                userAnswer: userAnswers[index],
+                correctAnswer: q.correctAnswer,
+                isCorrect: userAnswers[index] === q.correctAnswer
+            }))
+        };
+        
+        // Add to quiz attempts
+        analyticsData.quizAttempts.push(quizResult);
+        
+        // Update summary statistics
+        analyticsData.summary.totalAttempts = analyticsData.quizAttempts.length;
+        
+        // Calculate average score safely
+        if (analyticsData.quizAttempts.length > 0) {
+            analyticsData.summary.averageScore = Math.round(
+                analyticsData.quizAttempts.reduce((sum, attempt) => sum + attempt.percentage, 0) / 
+                analyticsData.quizAttempts.length
+            );
+        } else {
+            analyticsData.summary.averageScore = 0;
+        }
+        
+        // Save updated analytics
+        localStorage.setItem('adminAnalytics', JSON.stringify(analyticsData));
+        console.log('✅ Quiz results stored in admin analytics for:', currentUser.email);
+        
+    } catch (error) {
+        console.error('Error storing quiz results in analytics:', error);
+    }
+}
+
+// Get client IP address
+async function getClientIP() {
+    try {
+        const response = await fetch('https://api.ipify.org?format=json');
+        const data = await response.json();
+        return data.ip;
+    } catch (error) {
+        return 'unknown';
+    }
 }
 function showLoginScreen() {
     container.innerHTML = `
@@ -567,6 +944,7 @@ async function register() {
             clearSensitiveData();
             
             setCurrentUser(newUser);
+            logSecurityEvent('user_registration', { email: newUser.email, name: newUser.name });
             trackEvent('registration_success');
             
             alert('🎉 Registration successful! Welcome to The Conclusion Daily.');
@@ -622,6 +1000,7 @@ async function sendPasswordResetOTP() {
         const smsResult = await sendResetSMS(user.mobile, resetOtp);
         
         if (smsResult.success) {
+            logSecurityEvent('password_reset_otp_sent', { email: email });
             alert(`Password reset OTP sent to your registered mobile number ending with ${user.mobile.slice(-4)}`);
             showResetPasswordScreen();
             trackEvent('password_reset_otp_sent');
@@ -716,7 +1095,7 @@ async function resetPassword() {
             localStorage.removeItem('resetOTPTime');
             localStorage.removeItem('resetEmail');
             localStorage.removeItem('resetOTPType');
-            
+            logSecurityEvent('password_reset_success', { email: email });
             alert('✅ Password reset successfully! You can now login with your new password.');
             trackEvent('password_reset_success');
             showLoginScreen();
@@ -981,14 +1360,17 @@ async function registerUser(email, password, name = '', mobile = '') {
             return false;
         }
 
-        // Create user object
+       // Create user object with complete data
         const userData = {
-            id: Date.now(), // Simple unique ID
+            id: Date.now(),
             email: email.toLowerCase().trim(),
             name: name.trim(),
             mobile: mobile.trim(),
-            password: await hashPassword(password), // ✅ FIXED: Password is now hashed
+            password: await hashPassword(password),
             registrationDate: new Date().toISOString(),
+            registrationIP: await getClientIP(),
+            userAgent: navigator.userAgent,
+            deviceInfo: `${screen.width}x${screen.height}`,
             quizAttempts: 0,
             bestScore: 0,
             lastLogin: new Date().toISOString(),
@@ -996,24 +1378,22 @@ async function registerUser(email, password, name = '', mobile = '') {
             quizResults: []
         };
 
-        // Get existing users from localStorage
+        // Get existing users
         let users = JSON.parse(localStorage.getItem('quizUsers')) || [];
         
-        // Check if user already exists
+        // Check if user exists
         const existingUser = users.find(user => user.email === userData.email);
         if (existingUser) {
             alert('User with this email already exists!');
             return false;
         }
-    
+
         // Add new user
         users.push(userData);
-        localStorage.setItem("quizUsers", JSON.stringify(users));
-        localStorage.setItem("quizUsers", JSON.stringify(users));
         localStorage.setItem('quizUsers', JSON.stringify(users));
         
-        // ✅ CRITICAL: Save users back to localStorage
-        localStorage.setItem('quizUsers', JSON.stringify(users));
+        // ✅ AUTOMATICALLY STORE IN ANALYTICS
+        storeUserInAnalytics(userData);
         
         // Set as current user
         localStorage.setItem('currentUser', JSON.stringify(userData));
@@ -1021,7 +1401,6 @@ async function registerUser(email, password, name = '', mobile = '') {
         
         alert('Registration successful! Welcome to the quiz.');
         
-        // Redirect to quiz page
         setTimeout(() => {
             showQuiz();
         }, 1000);
@@ -1083,6 +1462,8 @@ async function login() {
             saveUsers(users);
             
             setCurrentUser(user);
+            initSession(user);
+            logSecurityEvent('login_success', { email: email });
             trackEvent('login_success');
             
             if (hasUserAttemptedQuiz()) {
@@ -1634,8 +2015,9 @@ function submitQuiz() {
     const [minutes, seconds] = timeText.split(':').map(Number);
     const timeUsed = timeLeft - (minutes * 60 + seconds);
     
-    exportUserDataForAnalytics(score, timeUsed); // Export user data
-
+    // ✅ AUTOMATICALLY STORE QUIZ RESULTS IN ANALYTICS
+    storeQuizResultsInAnalytics(score, timeUsed);
+    
     saveUserResult(score, questions.length, timeUsed);
     showSubmissionPage(timeUsed);
 }
