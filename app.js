@@ -1,3 +1,45 @@
+// Emergency debug code
+console.log('🔧 App starting...');
+
+// Global error handler
+window.onerror = function(msg, url, lineNo, columnNo, error) {
+    console.error('❌ JavaScript Error:', msg, 'at', url, 'line', lineNo);
+    document.body.innerHTML = `
+        <div style="padding: 20px; color: red; font-family: Arial;">
+            <h1>JavaScript Error</h1>
+            <p><strong>Error:</strong> ${msg}</p>
+            <p><strong>Line:</strong> ${lineNo}</p>
+            <p>Check browser console (F12) for details</p>
+        </div>
+    `;
+    return false;
+};
+
+// Check if root element exists
+if (!document.getElementById('root')) {
+    console.error('❌ Root element not found!');
+    document.body.innerHTML = '<h1 style="color: red; padding: 20px;">Error: No root element with id "root" found</h1>';
+} else {
+    console.log('✅ Root element found');
+}
+
+// Test if we can render something
+try {
+    const container = document.getElementById('root');
+    container.innerHTML = `
+        <div style="padding: 20px; text-align: center; background: #667eea; color: white; min-height: 100vh;">
+            <h1>App Loading... 🚀</h1>
+            <p>If you see this, JavaScript is working</p>
+            <button onclick="showLoginScreen()" style="padding: 10px 20px; margin: 10px;">Test Login Screen</button>
+        </div>
+    `;
+    console.log('✅ Test content rendered');
+} catch (error) {
+    console.error('❌ Error rendering test content:', error);
+}
+
+// Alert to confirm JS is running
+alert('JavaScript is loading - if you see this, JS is working');
 // Enhanced Questions Reels App with User Registration - One Attempt Only
 const questions = [
     {
@@ -174,7 +216,46 @@ function storeIndividualAttempt(user, score, total, timeUsed) {
     allAttempts.push(attemptData);
     localStorage.setItem('quizAttempts', JSON.stringify(allAttempts));
 }
+// User Management Utilities
+function getCurrentUser() {
+    try {
+        return JSON.parse(localStorage.getItem('currentUser'));
+    } catch (error) {
+        return null;
+    }
+}
 
+function setCurrentUser(user) {
+    localStorage.setItem('currentUser', JSON.stringify(user));
+    currentUser = user;
+}
+
+function updateUserStats(score) {
+    const currentUser = getCurrentUser();
+    if (!currentUser) return;
+    
+    let users = JSON.parse(localStorage.getItem('quizUsers')) || [];
+    const userIndex = users.findIndex(user => user.id === currentUser.id);
+    
+    if (userIndex !== -1) {
+        // Update attempts and best score
+        users[userIndex].quizAttempts = (users[userIndex].quizAttempts || 0) + 1;
+        
+        if (score > (users[userIndex].bestScore || 0)) {
+            users[userIndex].bestScore = score;
+        }
+        
+        users[userIndex].lastLogin = new Date().toISOString();
+        
+        // Save updated users
+        localStorage.setItem('quizUsers', JSON.stringify(users));
+        localStorage.setItem('currentUser', JSON.stringify(users[userIndex]));
+    }
+}
+
+function isUserLoggedIn() {
+    return localStorage.getItem('currentUser') !== null;
+}
 // Check if user has already attempted the quiz
 function hasUserAttemptedQuiz() {
     if (!currentUser) return false;
@@ -236,7 +317,7 @@ function showLoginScreen() {
             <div class="auth-box">
                 <div class="auth-header">
                     <img src="images/company-logo.png" alt="The Conclusion Daily Logo" class="auth-logo">
-                    <h1 class="auth-title">Welcome to The Conclusion Daily! 🎯</h1>
+                    <h1 class="auth-title">Welcome to The Conclusion Daily! </h1>
                 </div>
                 <p class="auth-subtitle">Test your knowledge with our interactive quiz</p>
                 
@@ -373,7 +454,7 @@ function showRegisterScreen() {
                         <input type="text" id="captchaInput" placeholder="Enter CAPTCHA code" class="auth-input" required>
                     </div>
                     
-                    <button onclick="register()" class="auth-btn" id="registerBtn">Create Account</button>
+                    <button onclick="handleRegistration(event)" class="auth-btn" id="registerBtn">Create Account</button>
                 </div>
                 
                 <div class="auth-divider">
@@ -388,6 +469,97 @@ function showRegisterScreen() {
     `;
     
     generateCaptcha();
+}
+// Enhanced Registration with Production Features
+async function register() {
+    const registerBtn = document.getElementById('registerBtn');
+    
+    try {
+        // Show loading state
+        registerBtn.disabled = true;
+        registerBtn.textContent = 'Creating Account...';
+
+        const name = document.getElementById('registerName').value.trim();
+        const email = document.getElementById('registerEmail').value.trim().toLowerCase();
+        const mobile = document.getElementById('registerMobile').value.trim();
+        const password = document.getElementById('registerPassword').value;
+        const confirm = document.getElementById('registerConfirm').value;
+        const captchaInput = document.getElementById('captchaInput').value.trim();
+        const storedCaptcha = localStorage.getItem('registerCaptcha');
+
+        // Comprehensive validation
+        const validation = validateRegistrationData(name, email, mobile, password, confirm, captchaInput, storedCaptcha);
+        if (!validation.isValid) {
+            alert(validation.message);
+            return;
+        }
+
+        // Verify mobile OTP
+        const otpVerification = verifyMobileOTP();
+        if (!otpVerification.isValid) {
+            alert(otpVerification.message);
+            return;
+        }
+
+        const users = getUsers();
+
+        // Check for existing users
+        const existingUser = users.find(u => u.email === email || u.mobile === mobile);
+        if (existingUser) {
+            if (existingUser.email === email) {
+                alert('Email already registered. Please use a different email or login.');
+            } else {
+                alert('Mobile number already registered.');
+            }
+            return;
+        }
+
+        // Hash password for security
+        const hashedPassword = await hashPassword(password);
+
+        // Create new user with enhanced data
+        const newUser = {
+            id: generateUserId(),
+            name: name,
+            email: email,
+            mobile: mobile,
+            password: hashedPassword,
+            isVerified: true,
+            isActive: true,
+            registrationDate: new Date().toISOString(),
+            lastLogin: null,
+            loginAttempts: 0,
+            quizResults: [],
+            metadata: {
+                ip: await getClientIP(),
+                userAgent: navigator.userAgent,
+                screenResolution: `${screen.width}x${screen.height}`
+            }
+        };
+
+        users.push(newUser);
+        
+        if (saveUsers(users)) {
+            // Clear sensitive data
+            clearSensitiveData();
+            
+            setCurrentUser(newUser);
+            trackEvent('registration_success');
+            
+            alert('🎉 Registration successful! Welcome to The Conclusion Daily.');
+            showQuiz();
+        } else {
+            throw new Error('Failed to save user data');
+        }
+
+    } catch (error) {
+        console.error('Registration error:', error);
+        alert('Registration failed. Please try again.');
+        trackEvent('registration_failed', { error: error.message });
+    } finally {
+        registerBtn.disabled = false;
+        registerBtn.textContent = 'Create Account';
+    }
 }
 // Forgot Password Functions
 async function sendPasswordResetOTP() {
@@ -740,7 +912,100 @@ async function register() {
         registerBtn.textContent = 'Create Account';
     }
 }
+// Registration Form Handler
+function handleRegistration(event) {
+    if (event) event.preventDefault();
+    
+    const email = document.getElementById('registerEmail').value;
+    const password = document.getElementById('registerPassword').value;
+    const confirmPassword = document.getElementById('registerConfirm').value;
+    const name = document.getElementById('registerName') ? document.getElementById('registerName').value : '';
+    const mobile = document.getElementById('registerMobile') ? document.getElementById('registerMobile').value : '';
+    
+    // Validate passwords match
+    if (password !== confirmPassword) {
+        alert('Passwords do not match!');
+        return false;
+    }
+    
+    // Validate CAPTCHA if exists
+    if (typeof validateCaptcha === 'function' && !validateCaptcha()) {
+        return false;
+    }
+    
+    // Register user
+    return registerUser(email, password, name, mobile);
+}
 
+// Alternative simple registration function
+async function registerUser(email, password, name = '', mobile = '') {
+    try {
+        // Validate inputs
+        if (!email || !password) {
+            alert('Please fill in all required fields');
+            return false;
+        }
+
+        // Email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            alert('Please enter a valid email address');
+            return false;
+        }
+
+        // Password strength check
+        if (password.length < 6) {
+            alert('Password must be at least 6 characters long');
+            return false;
+        }
+
+        // Create user object
+        const userData = {
+            id: Date.now(), // Simple unique ID
+            email: email.toLowerCase().trim(),
+            name: name.trim(),
+            mobile: mobile.trim(),
+            password: password, // In production, hash this!
+            registrationDate: new Date().toISOString(),
+            quizAttempts: 0,
+            bestScore: 0,
+            lastLogin: new Date().toISOString(),
+            isActive: true,
+            quizResults: []
+        };
+
+        // Get existing users from localStorage
+        let users = JSON.parse(localStorage.getItem('quizUsers')) || [];
+        
+        // Check if user already exists
+        const existingUser = users.find(user => user.email === userData.email);
+        if (existingUser) {
+            alert('User with this email already exists!');
+            return false;
+        }
+        
+        // Add new user
+        users.push(userData);
+        localStorage.setItem('quizUsers', JSON.stringify(users));
+        
+        // Set as current user
+        localStorage.setItem('currentUser', JSON.stringify(userData));
+        currentUser = userData;
+        
+        alert('Registration successful! Welcome to the quiz.');
+        
+        // Redirect to quiz page
+        setTimeout(() => {
+            showQuiz();
+        }, 1000);
+        
+        return true;
+    } catch (error) {
+        console.error('Registration error:', error);
+        alert('Registration failed. Please try again.');
+        return false;
+    }
+}
 // Enhanced Login with Production Features
 async function login() {
     const loginBtn = document.querySelector('#loginForm button') || document.querySelector('.auth-btn');
@@ -1101,6 +1366,10 @@ function showQuiz() {
             </div>
             <div class="user-info">
                 <span>Welcome, ${currentUser.name}!</span>
+                 ${isAdminUser(currentUser) ? 
+        '<a href="dashboard-7x3k9.html" class="admin-link" style="margin-right: 10px;">📊 Analytics</a>' : 
+        ''
+            }
                 <button onclick="logout()" class="logout-btn">Logout</button>
             </div>
         </div>
@@ -1344,17 +1613,14 @@ function showProfile() {
 }
 
 // Make functions globally available
-window.showQuiz = showQuiz;
-window.showQuestion = showQuestion;
-window.selectOption = selectOption;
-window.navigateToQuestion = navigateToQuestion;
-window.submitQuiz = submitQuiz;
 window.showProfile = showProfile;
 window.logout = logout;
 window.showLoginScreen = showLoginScreen;
 window.showRegisterScreen = showRegisterScreen;
 window.login = login;
-window.register = register;
+window.register = register;                    // ← ADD THIS
+window.handleRegistration = handleRegistration; // ← ADD THIS
+window.registerUser = registerUser;            // ← ADD THIS
 window.showAlreadyAttemptedScreen = showAlreadyAttemptedScreen;
 window.sendMobileOTP = sendMobileOTP;
 window.generateCaptcha = generateCaptcha;
@@ -1386,3 +1652,72 @@ function initApp() {
 }
 
 window.onload = initApp;
+
+// === ADMIN PANEL INTEGRATION ===
+
+// Check if user is admin
+function isAdminUser(user) {
+    const adminEmails = [
+        'admin@theconclusiondaily.com',
+        'theconclusiondaily@gmail.com'  // ← Change this to your email
+    ];
+    return adminEmails.includes(user.email.toLowerCase());
+}
+
+// Show floating admin button
+function showFloatingAdminButton() {
+    if (!currentUser || !isAdminUser(currentUser)) return;
+    
+    // Remove existing button if any
+    const existingBtn = document.querySelector('.floating-admin-btn');
+    if (existingBtn) existingBtn.remove();
+    
+    const floatingBtn = document.createElement('a');
+    floatingBtn.href = 'dashboard-7x3k9.html';
+    floatingBtn.className = 'floating-admin-btn';
+    floatingBtn.innerHTML = '📊 Admin';
+    floatingBtn.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #dc3545, #e83e8c);
+        color: white;
+        padding: 12px 16px;
+        border-radius: 50px;
+        text-decoration: none;
+        font-weight: bold;
+        box-shadow: 0 5px 20px rgba(220, 53, 69, 0.4);
+        z-index: 10000;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+    `;
+    
+    floatingBtn.addEventListener('mouseenter', function() {
+        this.style.transform = 'translateY(-3px)';
+        this.style.boxShadow = '0 8px 25px rgba(220, 53, 69, 0.5)';
+    });
+    
+    floatingBtn.addEventListener('mouseleave', function() {
+        this.style.transform = 'translateY(0)';
+        this.style.boxShadow = '0 5px 20px rgba(220, 53, 69, 0.4)';
+    });
+    
+    document.body.appendChild(floatingBtn);
+}
+
+// Update initApp to include admin button
+const originalInitApp = initApp;
+initApp = function() {
+    originalInitApp();
+    
+    // Show admin button after a short delay to ensure DOM is ready
+    setTimeout(() => {
+        if (currentUser && isAdminUser(currentUser)) {
+            showFloatingAdminButton();
+        }
+    }, 1000);
+};
+
+// Make functions globally available (add these to your existing list)
+window.isAdminUser = isAdminUser;
+window.showFloatingAdminButton = showFloatingAdminButton;
