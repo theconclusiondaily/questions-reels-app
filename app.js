@@ -935,7 +935,6 @@ function handleRegistration(event) {
     return registerUser(email, password, name, mobile);
 }
 
-// Alternative simple registration function
 async function registerUser(email, password, name = '', mobile = '') {
     try {
         // Validate inputs
@@ -963,7 +962,7 @@ async function registerUser(email, password, name = '', mobile = '') {
             email: email.toLowerCase().trim(),
             name: name.trim(),
             mobile: mobile.trim(),
-            password: password, // In production, hash this!
+            password: await hashPassword(password), // ✅ FIXED: Password is now hashed
             registrationDate: new Date().toISOString(),
             quizAttempts: 0,
             bestScore: 0,
@@ -981,9 +980,14 @@ async function registerUser(email, password, name = '', mobile = '') {
             alert('User with this email already exists!');
             return false;
         }
-        
+    
         // Add new user
         users.push(userData);
+        localStorage.setItem("quizUsers", JSON.stringify(users));
+        localStorage.setItem("quizUsers", JSON.stringify(users));
+        localStorage.setItem('quizUsers', JSON.stringify(users));
+        
+        // ✅ CRITICAL: Save users back to localStorage
         localStorage.setItem('quizUsers', JSON.stringify(users));
         
         // Set as current user
