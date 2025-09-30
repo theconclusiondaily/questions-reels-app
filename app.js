@@ -321,7 +321,12 @@ function showLoginScreen() {
                 
                 <div class="auth-form">
                     <input type="email" id="loginEmail" placeholder="Enter your email" class="auth-input" required>
-                    <input type="password" id="loginPassword" placeholder="Enter your password" class="auth-input" required>
+                    <div class="password-container">
+    <input type="password" id="loginPassword" placeholder="Enter your password" class="auth-input" required>
+    <button type="button" class="password-toggle" onclick="togglePassword('loginPassword')">
+        👁️
+    </button>
+</div>
                     
                     <!-- CAPTCHA for Login -->
                     <div class="captcha-container">
@@ -440,8 +445,18 @@ function showRegisterScreen() {
                     <div class="input-with-verification">
                         <input type="text" id="mobileOtp" placeholder="Enter Mobile OTP" class="auth-input" disabled>
                     </div>
-                    <input type="password" id="registerPassword" placeholder="Create Password (min. 8 characters)" class="auth-input" required>
-                    <input type="password" id="registerConfirm" placeholder="Confirm Password" class="auth-input" required>
+                    <div class="password-container">
+    <input type="password" id="registerPassword" placeholder="Create Password (min. 8 characters)" class="auth-input" required>
+    <button type="button" class="password-toggle" onclick="togglePassword('registerPassword')">
+        👁️
+    </button>
+</div>
+<div class="password-container">
+    <input type="password" id="registerConfirm" placeholder="Confirm Password" class="auth-input" required>
+    <button type="button" class="password-toggle" onclick="togglePassword('registerConfirm')">
+        👁️
+    </button>
+</div>
                     
                     <!-- CAPTCHA Section -->
                     <div class="captcha-container">
