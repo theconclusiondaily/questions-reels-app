@@ -446,16 +446,26 @@ function showRegisterScreen() {
                         <input type="text" id="mobileOtp" placeholder="Enter Mobile OTP" class="auth-input" disabled>
                     </div>
                     <div class="password-container">
-    <input type="password" id="registerPassword" placeholder="Create Password (min. 8 characters)" class="auth-input" required>
-    <button type="button" class="password-toggle" onclick="togglePassword('registerPassword')">
+    <input type="password" id="registerPassword" placeholder="Create Password (min. 8 characters)" class="auth-input" required 
+           oninput="checkPasswordStrength('registerPassword')">
+    <button type="button" class="password-toggle" onclick="togglePassword('registerPassword')" title="Show password">
         👁️
     </button>
 </div>
+<div class="password-strength-container">
+    <div class="password-strength" id="registerPasswordStrength"></div>
+    <div class="strength-text" id="registerPasswordStrengthText"></div>
+</div>
+
 <div class="password-container">
-    <input type="password" id="registerConfirm" placeholder="Confirm Password" class="auth-input" required>
-    <button type="button" class="password-toggle" onclick="togglePassword('registerConfirm')">
+    <input type="password" id="registerConfirm" placeholder="Confirm Password" class="auth-input" required
+           oninput="checkPasswordMatch()">
+    <button type="button" class="password-toggle" onclick="togglePassword('registerConfirm')" title="Show password">
         👁️
     </button>
+</div>
+<div class="password-match-container">
+    <div class="match-text" id="passwordMatchText"></div>
 </div>
                     
                     <!-- CAPTCHA Section -->
@@ -1313,7 +1323,81 @@ function trackEvent(eventName, properties = {}) {
     });
     localStorage.setItem('quizEvents', JSON.stringify(events));
 }
+// Password visibility toggle function
+function togglePassword(inputId) {
+    const passwordInput = document.getElementById(inputId);
+    const toggleButton = passwordInput.nextElementSibling;
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleButton.textContent = '🙈';
+        toggleButton.style.color = '#667eea';
+    } else {
+        passwordInput.type = 'password';
+        toggleButton.textContent = '👁️';
+        toggleButton.style.color = '#666';
+    }
+}
 
+// Real-time password strength indicator (Optional)
+function checkPasswordStrength(inputId) {
+    const password = document.getElementById(inputId).value;
+    const strengthBar = document.getElementById(inputId + 'Strength');
+    const strengthText = document.getElementById(inputId + 'StrengthText');
+    
+    if (!strengthBar) return;
+    
+    let strength = 0;
+    let text = '';
+    let color = '';
+    
+    if (password.length >= 8) strength += 25;
+    if (/[a-z]/.test(password)) strength += 25;
+    if (/[A-Z]/.test(password)) strength += 25;
+    if (/[0-9]/.test(password)) strength += 25;
+    
+    if (password.length === 0) {
+        text = '';
+        color = 'transparent';
+    } else if (strength <= 25) {
+        text = 'Weak';
+        color = '#ff4444';
+    } else if (strength <= 50) {
+        text = 'Fair';
+        color = '#ffaa00';
+    } else if (strength <= 75) {
+        text = 'Good';
+        color = '#4CAF50';
+    } else {
+        text = 'Strong';
+        color = '#4CAF50';
+    }
+    
+    strengthBar.style.width = strength + '%';
+    strengthBar.style.background = color;
+    strengthText.textContent = text;
+    strengthText.style.color = color;
+}
+// ✅ ADD checkPasswordMatch RIGHT HERE:
+// Password match checker
+function checkPasswordMatch() {
+    const password = document.getElementById('registerPassword').value;
+    const confirm = document.getElementById('registerConfirm').value;
+    const matchText = document.getElementById('passwordMatchText');
+    
+    if (!matchText) return;
+    
+    if (confirm.length === 0) {
+        matchText.textContent = '';
+        matchText.style.color = 'transparent';
+    } else if (password === confirm) {
+        matchText.textContent = '✅ Passwords match';
+        matchText.style.color = '#4CAF50';
+    } else {
+        matchText.textContent = '❌ Passwords do not match';
+        matchText.style.color = '#ff4444';
+    }
+}
 // Screen for users who have already attempted the quiz
 function showAlreadyAttemptedScreen() {
     const userResults = currentUser.quizResults[0]; // Get first attempt
@@ -1642,6 +1726,9 @@ window.showAlreadyAttemptedScreen = showAlreadyAttemptedScreen;
 window.sendMobileOTP = sendMobileOTP;
 window.generateCaptcha = generateCaptcha;
 window.generateLoginCaptcha = generateLoginCaptcha;
+window.togglePassword = togglePassword;  // ← ADD THIS LINE
+window.checkPasswordStrength = checkPasswordStrength;  // ← ADD THIS LINE (if using strength indicator)
+window.checkPasswordMatch = checkPasswordMatch;
 
 // ADD FORGOT PASSWORD FUNCTIONS:
 window.showForgotPasswordScreen = showForgotPasswordScreen;
