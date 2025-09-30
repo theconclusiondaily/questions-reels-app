@@ -38,8 +38,6 @@ try {
     console.error('❌ Error rendering test content:', error);
 }
 
-// Alert to confirm JS is running
-alert('JavaScript is loading - if you see this, JS is working');
 // Enhanced Questions Reels App with User Registration - One Attempt Only
 const questions = [
     {
