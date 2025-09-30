@@ -1573,6 +1573,47 @@ function updateProgressBar() {
         progressElement.style.width = progress + '%';
     }
 }
+// === ADD THIS FUNCTION === //
+// Export user data for analytics
+function exportUserDataForAnalytics(score, timeUsed) {
+    if (!currentUser) {
+        console.warn('No user data available for export');
+        alert('Please complete user registration first');
+        return;
+    }
+    
+    const userData = {
+        userId: currentUser.email,
+        userName: currentUser.name,
+        userMobile: currentUser.mobile,
+        score: score,
+        total: questions.length,
+        percentage: Math.round((score / questions.length) * 100),
+        timeUsed: timeUsed,
+        date: new Date().toLocaleDateString(),
+        time: new Date().toLocaleTimeString(),
+        timestamp: new Date().toISOString(),
+        answers: userAnswers || []
+    };
+    
+    // Create downloadable JSON file
+    const dataStr = JSON.stringify(userData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    
+    // Create download link
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(dataBlob);
+    link.download = `quiz-result-${currentUser.email}-${Date.now()}.json`;
+    link.style.display = 'none';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    console.log('📊 User data exported for analytics');
+    alert('✅ Results exported! Please send this file to the admin.');
+}
+// === END OF ADDED FUNCTION === //
 
 function submitQuiz() {
     if (quizTimer) {
@@ -1593,6 +1634,8 @@ function submitQuiz() {
     const [minutes, seconds] = timeText.split(':').map(Number);
     const timeUsed = timeLeft - (minutes * 60 + seconds);
     
+    exportUserDataForAnalytics(score, timeUsed); // Export user data
+
     saveUserResult(score, questions.length, timeUsed);
     showSubmissionPage(timeUsed);
 }
@@ -1630,6 +1673,34 @@ function showSubmissionPage(timeUsed) {
                         <div class="detail-value">${new Date().toLocaleTimeString()}</div>
                     </div>
                 </div>
+                
+                <!-- === ADD EXPORT SECTION RIGHT HERE === -->
+                <div class="export-section" style="margin-top: 30px; padding: 20px; background: #f8f9ff; border-radius: 10px; border: 2px dashed #667eea;">
+                    <h3 style="color: #333; margin-bottom: 15px; text-align: center;">📤 Share Your Results</h3>
+                    <p style="text-align: center; margin-bottom: 15px; color: #555;">
+                        Help us improve by sharing your quiz data with the admin:
+                    </p>
+                    
+                    <div style="text-align: center; margin: 20px 0;">
+                        <button onclick="exportUserDataForAnalytics(${score}, ${timeUsed})" 
+                                style="background: #667eea; color: white; border: none; padding: 12px 24px; border-radius: 5px; cursor: pointer; font-size: 16px; margin: 10px;">
+                            📊 Export My Results
+                        </button>
+                    </div>
+                    
+                    <div style="font-size: 0.9rem; color: #666; margin-top: 15px; background: white; padding: 15px; border-radius: 5px;">
+                        <p style="margin-bottom: 10px;"><strong>📝 Instructions:</strong></p>
+                        <ol style="text-align: left; margin-left: 20px; line-height: 1.6;">
+                            <li>Click <strong>"Export My Results"</strong> to download your data file (.json)</li>
+                            <li>Send the downloaded file to your quiz administrator via email/WhatsApp</li>
+                            <li>Or upload it directly to the <a href="data-collection.html" style="color: #667eea; font-weight: bold;">Data Collection Page</a></li>
+                        </ol>
+                        <p style="margin-top: 10px; font-style: italic;">
+                            This helps us analyze overall quiz performance and improve content!
+                        </p>
+                    </div>
+                </div>
+                <!-- === END OF ADDED SECTION === -->
                 
                 <div class="one-time-message">
                     <div class="message-icon">🎯</div>
@@ -1729,6 +1800,7 @@ window.generateLoginCaptcha = generateLoginCaptcha;
 window.togglePassword = togglePassword;  // ← ADD THIS LINE
 window.checkPasswordStrength = checkPasswordStrength;  // ← ADD THIS LINE (if using strength indicator)
 window.checkPasswordMatch = checkPasswordMatch;
+window.exportUserDataForAnalytics = exportUserDataForAnalytics;
 
 // ADD FORGOT PASSWORD FUNCTIONS:
 window.showForgotPasswordScreen = showForgotPasswordScreen;

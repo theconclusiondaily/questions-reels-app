@@ -1,1 +1,255 @@
 <!-- Paste the data-collection.html code here -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Quiz Data Collection - The Conclusion Daily</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            padding: 20px; 
+            background: #f5f5f5; 
+            margin: 0;
+        }
+        .container { 
+            max-width: 800px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 30px; 
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; margin-bottom: 20px; }
+        .upload-area { 
+            border: 2px dashed #667eea; 
+            padding: 40px; 
+            text-align: center; 
+            margin: 20px 0; 
+            border-radius: 8px;
+            background: #f8f9ff;
+            transition: background 0.3s;
+        }
+        .upload-area:hover {
+            background: #e3f2fd;
+        }
+        .upload-area.highlight {
+            background: #e3f2fd;
+            border-color: #2196f3;
+        }
+        .data-preview { 
+            background: #f9f9f9; 
+            padding: 15px; 
+            margin: 10px 0; 
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #5a6fd8;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: #f8f9ff;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Quiz Data Collection</h1>
+        <p>Upload user quiz data files to see consolidated analytics</p>
+        
+        <div class="upload-area" id="uploadArea">
+            <p style="font-size: 1.2em; margin-bottom: 20px;">📁 Drag & drop user data files here</p>
+            <p style="color: #666; margin-bottom: 20px;">or</p>
+            <input type="file" id="fileInput" multiple accept=".json" style="display: none;">
+            <button onclick="document.getElementById('fileInput').click()">Browse Files</button>
+            <p style="color: #888; margin-top: 15px; font-size: 0.9em;">
+                Select multiple .json files exported from the quiz
+            </p>
+        </div>
+        
+        <div id="dataPreview"></div>
+        
+        <div id="analyticsSummary" style="display: none; margin-top: 30px;">
+            <h3>📈 Consolidated Analytics</h3>
+            <div id="summaryStats" class="stats-grid"></div>
+            <button onclick="exportConsolidatedData()">Export All Data as JSON</button>
+            <button onclick="clearAllData()" style="background: #dc3545;">Clear All Data</button>
+        </div>
+    </div>
+
+    <script>
+        let allUserData = [];
+        
+        // File input handler
+        document.getElementById('fileInput').addEventListener('change', handleFileUpload);
+        
+        function handleFileUpload(event) {
+            const files = event.target.files;
+            processFiles(files);
+        }
+        
+        function processFiles(files) {
+            Array.from(files).forEach(file => {
+                if (file.type !== 'application/json' && !file.name.endsWith('.json')) {
+                    alert('Skipping non-JSON file: ' + file.name);
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const userData = JSON.parse(e.target.result);
+                        
+                        // Check if data already exists
+                        const exists = allUserData.some(existing => 
+                            existing.userId === userData.userId && 
+                            existing.timestamp === userData.timestamp
+                        );
+                        
+                        if (!exists) {
+                            allUserData.push(userData);
+                            displayUserData(userData);
+                            updateAnalyticsSummary();
+                        } else {
+                            console.log('Duplicate data skipped:', userData.userId);
+                        }
+                    } catch (error) {
+                        alert('Invalid JSON file: ' + file.name + '\nError: ' + error.message);
+                    }
+                };
+                reader.readAsText(file);
+            });
+        }
+        
+        function displayUserData(data) {
+            const preview = document.getElementById('dataPreview');
+            const div = document.createElement('div');
+            div.className = 'data-preview';
+            div.innerHTML = `
+                <strong>👤 ${data.userName}</strong> (${data.userId})<br>
+                📊 Score: ${data.score}/${data.total} (${data.percentage}%)<br>
+                ⏱️ Time: ${Math.floor(data.timeUsed/60)}m ${data.timeUsed%60}s<br>
+                📅 Date: ${data.date} ${data.time}
+            `;
+            preview.appendChild(div);
+        }
+        
+        function updateAnalyticsSummary() {
+            const summary = document.getElementById('summaryStats');
+            const totalUsers = allUserData.length;
+            
+            if (totalUsers === 0) {
+                summary.innerHTML = '<p>No data available</p>';
+                return;
+            }
+            
+            const avgScore = Math.round(allUserData.reduce((sum, data) => sum + data.percentage, 0) / totalUsers);
+            const avgTime = Math.round(allUserData.reduce((sum, data) => sum + data.timeUsed, 0) / totalUsers);
+            
+            // Calculate score distribution
+            const scoreRanges = { '90-100': 0, '80-89': 0, '70-79': 0, '60-69': 0, '0-59': 0 };
+            allUserData.forEach(data => {
+                if (data.percentage >= 90) scoreRanges['90-100']++;
+                else if (data.percentage >= 80) scoreRanges['80-89']++;
+                else if (data.percentage >= 70) scoreRanges['70-79']++;
+                else if (data.percentage >= 60) scoreRanges['60-69']++;
+                else scoreRanges['0-59']++;
+            });
+            
+            summary.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${totalUsers}</div>
+                    <div>Total Participants</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${avgScore}%</div>
+                    <div>Average Score</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${Math.floor(avgTime/60)}m ${avgTime%60}s</div>
+                    <div>Average Time</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${Math.max(...allUserData.map(d => d.percentage))}%</div>
+                    <div>Highest Score</div>
+                </div>
+            `;
+            
+            // Add score distribution
+            const distributionDiv = document.createElement('div');
+            distributionDiv.style.gridColumn = '1 / -1';
+            distributionDiv.innerHTML = `
+                <h4>Score Distribution:</h4>
+                <p>90-100%: ${scoreRanges['90-100']} users</p>
+                <p>80-89%: ${scoreRanges['80-89']} users</p>
+                <p>70-79%: ${scoreRanges['70-79']} users</p>
+                <p>60-69%: ${scoreRanges['60-69']} users</p>
+                <p>0-59%: ${scoreRanges['0-59']} users</p>
+            `;
+            summary.appendChild(distributionDiv);
+            
+            document.getElementById('analyticsSummary').style.display = 'block';
+        }
+        
+        function exportConsolidatedData() {
+            const dataStr = JSON.stringify(allUserData, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `consolidated-quiz-data-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+        }
+        
+        function clearAllData() {
+            if (confirm('Are you sure you want to clear all data?')) {
+                allUserData = [];
+                document.getElementById('dataPreview').innerHTML = '';
+                document.getElementById('analyticsSummary').style.display = 'none';
+            }
+        }
+        
+        // Drag and drop support
+        const uploadArea = document.getElementById('uploadArea');
+        
+        ['dragover', 'dragenter'].forEach(event => {
+            uploadArea.addEventListener(event, (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('highlight');
+            });
+        });
+        
+        ['dragleave', 'dragend'].forEach(event => {
+            uploadArea.addEventListener(event, () => {
+                uploadArea.classList.remove('highlight');
+            });
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('highlight');
+            processFiles(e.dataTransfer.files);
+        });
+    </script>
+</body>
+</html>
