@@ -1,0 +1,175 @@
+warning: in the working copy of 'app.js', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/app.js b/app.js[m
+[1mindex 93ac9ce..0292332 100644[m
+[1m--- a/app.js[m
+[1m+++ b/app.js[m
+[36m@@ -870,98 +870,7 @@[m [mfunction showRegisterScreen() {[m
+     [m
+     generateCaptcha();[m
+ }[m
+[31m-// Enhanced Registration with Production Features[m
+[31m-async function register() {[m
+[31m-    const registerBtn = document.getElementById('registerBtn');[m
+[31m-    [m
+[31m-    try {[m
+[31m-        // Show loading state[m
+[31m-        registerBtn.disabled = true;[m
+[31m-        registerBtn.textContent = 'Creating Account...';[m
+[31m-[m
+[31m-        const name = document.getElementById('registerName').value.trim();[m
+[31m-        const email = document.getElementById('registerEmail').value.trim().toLowerCase();[m
+[31m-        const mobile = document.getElementById('registerMobile').value.trim();[m
+[31m-        const password = document.getElementById('registerPassword').value;[m
+[31m-        const confirm = document.getElementById('registerConfirm').value;[m
+[31m-        const captchaInput = document.getElementById('captchaInput').value.trim();[m
+[31m-        const storedCaptcha = localStorage.getItem('registerCaptcha');[m
+[31m-[m
+[31m-        // Comprehensive validation[m
+[31m-        const validation = validateRegistrationData(name, email, mobile, password, confirm, captchaInput, storedCaptcha);[m
+[31m-        if (!validation.isValid) {[m
+[31m-            alert(validation.message);[m
+[31m-            return;[m
+[31m-        }[m
+[31m-[m
+[31m-        // Verify mobile OTP[m
+[31m-        const otpVerification = verifyMobileOTP();[m
+[31m-        if (!otpVerification.isValid) {[m
+[31m-            alert(otpVerification.message);[m
+[31m-            return;[m
+[31m-        }[m
+[31m-[m
+[31m-        const users = getUsers();[m
+[31m-[m
+[31m-        // Check for existing users[m
+[31m-        const existingUser = users.find(u => u.email === email || u.mobile === mobile);[m
+[31m-        if (existingUser) {[m
+[31m-            if (existingUser.email === email) {[m
+[31m-                alert('Email already registered. Please use a different email or login.');[m
+[31m-            } else {[m
+[31m-                alert('Mobile number already registered.');[m
+[31m-            }[m
+[31m-            return;[m
+[31m-        }[m
+[31m-[m
+[31m-        // Hash password for security[m
+[31m-        const hashedPassword = await hashPassword(password);[m
+[31m-[m
+[31m-        // Create new user with enhanced data[m
+[31m-        const newUser = {[m
+[31m-            id: generateUserId(),[m
+[31m-            name: name,[m
+[31m-            email: email,[m
+[31m-            mobile: mobile,[m
+[31m-            password: hashedPassword,[m
+[31m-            isVerified: true,[m
+[31m-            isActive: true,[m
+[31m-            registrationDate: new Date().toISOString(),[m
+[31m-            lastLogin: null,[m
+[31m-            loginAttempts: 0,[m
+[31m-            quizResults: [],[m
+[31m-            metadata: {[m
+[31m-                ip: await getClientIP(),[m
+[31m-                userAgent: navigator.userAgent,[m
+[31m-                screenResolution: `${screen.width}x${screen.height}`[m
+[31m-            }[m
+[31m-        };[m
+ [m
+[31m-        users.push(newUser);[m
+[31m-        [m
+[31m-        if (saveUsers(users)) {[m
+[31m-            // Clear sensitive data[m
+[31m-            clearSensitiveData();[m
+[31m-            [m
+[31m-            setCurrentUser(newUser);[m
+[31m-            logSecurityEvent('user_registration', { email: newUser.email, name: newUser.name });[m
+[31m-            trackEvent('registration_success');[m
+[31m-            [m
+[31m-            alert('🎉 Registration successful! Welcome to The Conclusion Daily.');[m
+[31m-            showQuiz();[m
+[31m-        } else {[m
+[31m-            throw new Error('Failed to save user data');[m
+[31m-        }[m
+[31m-[m
+[31m-    } catch (error) {[m
+[31m-        console.error('Registration error:', error);[m
+[31m-        alert('Registration failed. Please try again.');[m
+[31m-        trackEvent('registration_failed', { error: error.message });[m
+[31m-    } finally {[m
+[31m-        registerBtn.disabled = false;[m
+[31m-        registerBtn.textContent = 'Create Account';[m
+[31m-    }[m
+[31m-}[m
+ // Forgot Password Functions[m
+ async function sendPasswordResetOTP() {[m
+     const sendBtn = document.getElementById('sendResetOtpBtn');[m
+[36m@@ -1240,6 +1149,11 @@[m [masync function register() {[m
+         const captchaInput = document.getElementById('captchaInput').value.trim();[m
+         const storedCaptcha = localStorage.getItem('registerCaptcha');[m
+ [m
+[32m+[m[32m        // ========== ADD RATE LIMITING CHECK ==========[m
+[32m+[m[32m        if (!checkRateLimit(`registration_${email}`, 3, 15 * 60 * 1000)) {[m
+[32m+[m[32m            alert('Too many registration attempts. Please try again in 15 minutes.');[m
+[32m+[m[32m            return;[m
+[32m+[m[32m        }[m
+         // Comprehensive validation[m
+         const validation = validateRegistrationData(name, email, mobile, password, confirm, captchaInput, storedCaptcha);[m
+         if (!validation.isValid) {[m
+[36m@@ -1412,7 +1326,7 @@[m [masync function registerUser(email, password, name = '', mobile = '') {[m
+         return false;[m
+     }[m
+ }[m
+[31m-// Enhanced Login with Production Features[m
+[32m+[m[32m// Enhanced Login with Security Features[m
+ async function login() {[m
+     const loginBtn = document.querySelector('#loginForm button') || document.querySelector('.auth-btn');[m
+     [m
+[36m@@ -1420,20 +1334,34 @@[m [masync function login() {[m
+         loginBtn.disabled = true;[m
+         loginBtn.textContent = 'Logging in...';[m
+ [m
+[31m-        const email = document.getElementById('loginEmail').value.trim().toLowerCase();[m
+[32m+[m[32m        const email = sanitizeInput(document.getElementById('loginEmail').value.trim().toLowerCase());[m
+         const password = document.getElementById('loginPassword').value;[m
+[31m-        const captchaInput = document.getElementById('loginCaptchaInput').value.trim();[m
+[32m+[m[32m        const captchaInput = sanitizeInput(document.getElementById('loginCaptchaInput').value.trim());[m
+         const storedCaptcha = localStorage.getItem('loginCaptcha');[m
+ [m
+[31m-        // Validation[m
+[31m-        if (!email || !password || !captchaInput) {[m
+[31m-            alert('Please fill all fields');[m
+[32m+[m[32m        // Input validation[m
+[32m+[m[32m        if (!validateEmail(email)) {[m
+[32m+[m[32m            alert('Please enter a valid email address');[m
+             return;[m
+         }[m
+ [m
+[32m+[m[32m        if (!password) {[m
+[32m+[m[32m            alert('Please enter your password');[m
+[32m+[m[32m            return;[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        // Rate limiting check[m
+[32m+[m[32m        if (!checkRateLimit(`login_${email}`, SECURITY_CONFIG.MAX_LOGIN_ATTEMPTS, SECURITY_CONFIG.LOGIN_TIMEOUT)) {[m
+[32m+[m[32m            alert('Too many login attempts. Please try again in 15 minutes.');[m
+[32m+[m[32m            generateLoginCaptcha();[m
+[32m+[m[32m            return;[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        // CAPTCHA validation[m
+         if (captchaInput !== storedCaptcha) {[m
+             alert('Invalid CAPTCHA code. Please try again.');[m
+             generateLoginCaptcha();[m
+[32m+[m[32m            logSecurityEvent('login_captcha_failed', { email: email });[m
+             return;[m
+         }[m
+ [m
+[36m@@ -1443,12 +1371,7 @@[m [masync function login() {[m
+         if (!user) {[m
+             alert('Invalid email or password');[m
+             generateLoginCaptcha();[m
+[31m-            return;[m
+[31m-        }[m
+[31m-[m
+[31m-        // Check if account is locked[m
+[31m-        if (user.loginAttempts >= CONFIG.MAX_LOGIN_ATTEMPTS) {[m
+[31m-     

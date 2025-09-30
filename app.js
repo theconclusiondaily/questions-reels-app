@@ -870,98 +870,7 @@ function showRegisterScreen() {
     
     generateCaptcha();
 }
-// Enhanced Registration with Production Features
-async function register() {
-    const registerBtn = document.getElementById('registerBtn');
-    
-    try {
-        // Show loading state
-        registerBtn.disabled = true;
-        registerBtn.textContent = 'Creating Account...';
 
-        const name = document.getElementById('registerName').value.trim();
-        const email = document.getElementById('registerEmail').value.trim().toLowerCase();
-        const mobile = document.getElementById('registerMobile').value.trim();
-        const password = document.getElementById('registerPassword').value;
-        const confirm = document.getElementById('registerConfirm').value;
-        const captchaInput = document.getElementById('captchaInput').value.trim();
-        const storedCaptcha = localStorage.getItem('registerCaptcha');
-
-        // Comprehensive validation
-        const validation = validateRegistrationData(name, email, mobile, password, confirm, captchaInput, storedCaptcha);
-        if (!validation.isValid) {
-            alert(validation.message);
-            return;
-        }
-
-        // Verify mobile OTP
-        const otpVerification = verifyMobileOTP();
-        if (!otpVerification.isValid) {
-            alert(otpVerification.message);
-            return;
-        }
-
-        const users = getUsers();
-
-        // Check for existing users
-        const existingUser = users.find(u => u.email === email || u.mobile === mobile);
-        if (existingUser) {
-            if (existingUser.email === email) {
-                alert('Email already registered. Please use a different email or login.');
-            } else {
-                alert('Mobile number already registered.');
-            }
-            return;
-        }
-
-        // Hash password for security
-        const hashedPassword = await hashPassword(password);
-
-        // Create new user with enhanced data
-        const newUser = {
-            id: generateUserId(),
-            name: name,
-            email: email,
-            mobile: mobile,
-            password: hashedPassword,
-            isVerified: true,
-            isActive: true,
-            registrationDate: new Date().toISOString(),
-            lastLogin: null,
-            loginAttempts: 0,
-            quizResults: [],
-            metadata: {
-                ip: await getClientIP(),
-                userAgent: navigator.userAgent,
-                screenResolution: `${screen.width}x${screen.height}`
-            }
-        };
-
-        users.push(newUser);
-        
-        if (saveUsers(users)) {
-            // Clear sensitive data
-            clearSensitiveData();
-            
-            setCurrentUser(newUser);
-            logSecurityEvent('user_registration', { email: newUser.email, name: newUser.name });
-            trackEvent('registration_success');
-            
-            alert('🎉 Registration successful! Welcome to The Conclusion Daily.');
-            showQuiz();
-        } else {
-            throw new Error('Failed to save user data');
-        }
-
-    } catch (error) {
-        console.error('Registration error:', error);
-        alert('Registration failed. Please try again.');
-        trackEvent('registration_failed', { error: error.message });
-    } finally {
-        registerBtn.disabled = false;
-        registerBtn.textContent = 'Create Account';
-    }
-}
 // Forgot Password Functions
 async function sendPasswordResetOTP() {
     const sendBtn = document.getElementById('sendResetOtpBtn');
@@ -1240,6 +1149,11 @@ async function register() {
         const captchaInput = document.getElementById('captchaInput').value.trim();
         const storedCaptcha = localStorage.getItem('registerCaptcha');
 
+        // ========== ADD RATE LIMITING CHECK ==========
+        if (!checkRateLimit(`registration_${email}`, 3, 15 * 60 * 1000)) {
+            alert('Too many registration attempts. Please try again in 15 minutes.');
+            return;
+        }
         // Comprehensive validation
         const validation = validateRegistrationData(name, email, mobile, password, confirm, captchaInput, storedCaptcha);
         if (!validation.isValid) {
@@ -1412,7 +1326,7 @@ async function registerUser(email, password, name = '', mobile = '') {
         return false;
     }
 }
-// Enhanced Login with Production Features
+// Enhanced Login with Security Features
 async function login() {
     const loginBtn = document.querySelector('#loginForm button') || document.querySelector('.auth-btn');
     
@@ -1420,20 +1334,34 @@ async function login() {
         loginBtn.disabled = true;
         loginBtn.textContent = 'Logging in...';
 
-        const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+        const email = sanitizeInput(document.getElementById('loginEmail').value.trim().toLowerCase());
         const password = document.getElementById('loginPassword').value;
-        const captchaInput = document.getElementById('loginCaptchaInput').value.trim();
+        const captchaInput = sanitizeInput(document.getElementById('loginCaptchaInput').value.trim());
         const storedCaptcha = localStorage.getItem('loginCaptcha');
 
-        // Validation
-        if (!email || !password || !captchaInput) {
-            alert('Please fill all fields');
+        // Input validation
+        if (!validateEmail(email)) {
+            alert('Please enter a valid email address');
             return;
         }
 
+        if (!password) {
+            alert('Please enter your password');
+            return;
+        }
+
+        // Rate limiting check
+        if (!checkRateLimit(`login_${email}`, SECURITY_CONFIG.MAX_LOGIN_ATTEMPTS, SECURITY_CONFIG.LOGIN_TIMEOUT)) {
+            alert('Too many login attempts. Please try again in 15 minutes.');
+            generateLoginCaptcha();
+            return;
+        }
+
+        // CAPTCHA validation
         if (captchaInput !== storedCaptcha) {
             alert('Invalid CAPTCHA code. Please try again.');
             generateLoginCaptcha();
+            logSecurityEvent('login_captcha_failed', { email: email });
             return;
         }
 
@@ -1443,12 +1371,7 @@ async function login() {
         if (!user) {
             alert('Invalid email or password');
             generateLoginCaptcha();
-            return;
-        }
-
-        // Check if account is locked
-        if (user.loginAttempts >= CONFIG.MAX_LOGIN_ATTEMPTS) {
-            alert('Account temporarily locked due to too many failed attempts. Please try again later.');
+            logSecurityEvent('login_failed', { email: email, reason: 'user_not_found' });
             return;
         }
 
@@ -1463,8 +1386,8 @@ async function login() {
             
             setCurrentUser(user);
             initSession(user);
+            
             logSecurityEvent('login_success', { email: email });
-            trackEvent('login_success');
             
             if (hasUserAttemptedQuiz()) {
                 showAlreadyAttemptedScreen();
@@ -1476,14 +1399,15 @@ async function login() {
             user.loginAttempts = (user.loginAttempts || 0) + 1;
             saveUsers(users);
             
-            alert(`Invalid email or password. ${CONFIG.MAX_LOGIN_ATTEMPTS - user.loginAttempts} attempts remaining.`);
+            alert(`Invalid email or password. ${SECURITY_CONFIG.MAX_LOGIN_ATTEMPTS - user.loginAttempts} attempts remaining.`);
             generateLoginCaptcha();
-            trackEvent('login_failed', { attempts: user.loginAttempts });
+            logSecurityEvent('login_failed', { email: email, attempts: user.loginAttempts });
         }
 
     } catch (error) {
         console.error('Login error:', error);
         alert('Login failed. Please try again.');
+        logSecurityEvent('login_error', { error: error.message });
     } finally {
         loginBtn.disabled = false;
         loginBtn.textContent = 'Login';

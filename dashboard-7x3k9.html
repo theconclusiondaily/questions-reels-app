@@ -3,19 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - The Conclusion Daily</title>
+    <title>Quiz Analytics - The Conclusion Daily</title>
     
-    <!-- === SECURITY CHECK - ADD THIS AT THE TOP === -->
+    <!-- SECURITY CHECK -->
     <script>
-        // Admin Authentication Check
         (function() {
-            // ⚠️ IMPORTANT: Change these emails to YOUR admin emails
-            const ADMIN_EMAILS = [
-                'admin@theconclusiondaily.com', 
-                'theconclusiondaily@gmail.com'  // ← CHANGE THIS TO YOUR EMAIL
-            ];
+            // ⚠️ CHANGE THIS TO YOUR ACTUAL EMAIL
+            const ADMIN_EMAILS = ['admin@theconclusiondaily.com'];
             
-            // Get current user from localStorage
             let currentUser = null;
             try {
                 currentUser = JSON.parse(localStorage.getItem('currentUser'));
@@ -23,16 +18,14 @@
                 console.error('Error parsing user data:', error);
             }
             
-            // Check if user is authenticated and is admin
             const isAuthorized = currentUser && ADMIN_EMAILS.includes(currentUser.email.toLowerCase());
             
             if (!isAuthorized) {
-                // Show access denied page
                 document.write(`
                     <!DOCTYPE html>
                     <html>
                     <head>
-                        <title>Access Denied</title>
+                        <title>Page Not Found</title>
                         <style>
                             body {
                                 margin: 0;
@@ -44,7 +37,7 @@
                                 justify-content: center;
                                 align-items: center;
                             }
-                            .access-denied {
+                            .error-page {
                                 background: white;
                                 padding: 40px;
                                 border-radius: 15px;
@@ -52,19 +45,9 @@
                                 box-shadow: 0 20px 40px rgba(0,0,0,0.1);
                                 max-width: 400px;
                             }
-                            .icon {
-                                font-size: 4rem;
-                                margin-bottom: 20px;
-                            }
-                            h1 {
-                                color: #dc3545;
-                                margin-bottom: 20px;
-                            }
-                            p {
-                                color: #666;
-                                margin-bottom: 30px;
-                                line-height: 1.5;
-                            }
+                            .icon { font-size: 4rem; margin-bottom: 20px; }
+                            h1 { color: #666; margin-bottom: 20px; }
+                            p { color: #888; margin-bottom: 30px; }
                             .btn {
                                 background: #667eea;
                                 color: white;
@@ -73,30 +56,20 @@
                                 text-decoration: none;
                                 font-weight: bold;
                                 display: inline-block;
-                                transition: all 0.3s ease;
-                            }
-                            .btn:hover {
-                                background: #5a6fd8;
-                                transform: translateY(-2px);
                             }
                         </style>
                     </head>
                     <body>
-                        <div class="access-denied">
-                            <div class="icon">🚫</div>
-                            <h1>Access Denied</h1>
-                            <p><strong>You don't have permission to access the admin panel.</strong></p>
-                            <p style="font-size: 0.9rem; color: #888;">
-                                This area is restricted to authorized administrators only.
-                            </p>
-                            <a href="index.html" class="btn">Back to Quiz</a>
+                        <div class="error-page">
+                            <div class="icon">🔍</div>
+                            <h1>Page Not Found</h1>
+                            <p>The page you're looking for doesn't exist.</p>
+                            <a href="index.html" class="btn">Back to Home</a>
                         </div>
                     </body>
                     </html>
                 `);
-                
-                // Stop execution
-                throw new Error('Unauthorized access to admin panel');
+                throw new Error('Unauthorized access');
             }
         })();
     </script>
@@ -386,7 +359,6 @@
             font-size: 1.1rem;
         }
 
-        /* Mobile Responsive */
         @media (max-width: 768px) {
             .admin-container {
                 padding: 10px;
@@ -430,11 +402,10 @@
 <body>
     <div class="admin-container">
         <div class="admin-header">
-            <h1 class="admin-title">Admin Panel - The Conclusion Daily</h1>
-            <p class="admin-subtitle">Manage users, view quiz results, and export data</p>
+            <h1 class="admin-title">Quiz Analytics Dashboard</h1>
+            <p class="admin-subtitle">View participation statistics and results</p>
         </div>
 
-        <!-- Statistics Cards -->
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-value" id="totalUsers">0</div>
@@ -454,7 +425,6 @@
             </div>
         </div>
 
-        <!-- Tabs Navigation -->
         <div class="tabs">
             <button class="tab-btn active" onclick="showTab('users')">Users</button>
             <button class="tab-btn" onclick="showTab('attempts')">Quiz Attempts</button>
@@ -462,7 +432,6 @@
             <button class="tab-btn" onclick="showTab('export')">Export Data</button>
         </div>
 
-        <!-- Users Tab -->
         <div id="users-tab" class="tab-content active">
             <h2>Registered Users</h2>
             <input type="text" class="search-box" id="userSearch" placeholder="Search users by name, email, or mobile..." onkeyup="searchUsers()">
@@ -488,13 +457,11 @@
                         </tr>
                     </thead>
                     <tbody id="usersTableBody">
-                        <!-- Users will be populated here -->
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <!-- Quiz Attempts Tab -->
         <div id="attempts-tab" class="tab-content">
             <h2>Quiz Attempts</h2>
             <input type="text" class="search-box" id="attemptSearch" placeholder="Search attempts by user or score..." onkeyup="searchAttempts()">
@@ -519,13 +486,11 @@
                         </tr>
                     </thead>
                     <tbody id="attemptsTableBody">
-                        <!-- Attempts will be populated here -->
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <!-- Analytics Tab -->
         <div id="analytics-tab" class="tab-content">
             <h2>Quiz Analytics</h2>
             
@@ -558,7 +523,6 @@
             </div>
         </div>
 
-        <!-- Export Tab -->
         <div id="export-tab" class="tab-content">
             <h2>Data Export</h2>
             <p>Export quiz data in various formats for analysis and reporting.</p>
@@ -577,7 +541,6 @@
             <div class="export-section">
                 <h3>Data Summary</h3>
                 <div id="dataSummary">
-                    <!-- Data summary will be populated here -->
                 </div>
             </div>
 
@@ -591,7 +554,6 @@
             </div>
         </div>
 
-        <!-- No Data Message -->
         <div id="noDataMessage" class="no-data" style="display: none;">
             <h3>No Data Available</h3>
             <p>No users or quiz attempts found in the system.</p>
@@ -600,19 +562,13 @@
     </div>
 
     <script>
-        // ⚠️ IMPORTANT: Change this to your actual admin email
-        const ADMIN_EMAILS = [
-            'admin@theconclusiondaily.com', 
-            'theconclusiondaily@gmail.com'  // ← CHANGE THIS TO YOUR EMAIL
-        ];
+        // ⚠️ CHANGE THIS TO YOUR ACTUAL EMAIL (same as above)
+        const ADMIN_EMAILS = ['admin@theconclusiondaily.com'];
 
-        // Admin Panel JavaScript
         let allUsers = [];
         let allAttempts = [];
 
-        // Initialize admin panel
         function initAdminPanel() {
-            // Double-check authorization
             const currentUser = JSON.parse(localStorage.getItem('currentUser'));
             if (!currentUser || !ADMIN_EMAILS.includes(currentUser.email.toLowerCase())) {
                 window.location.href = 'index.html';
@@ -624,13 +580,11 @@
             showTab('users');
         }
 
-        // Load data from localStorage
         function loadData() {
             try {
                 allUsers = JSON.parse(localStorage.getItem('quizUsers')) || [];
                 allAttempts = JSON.parse(localStorage.getItem('quizAttempts')) || [];
                 
-                // Show/hide no data message
                 const noDataMessage = document.getElementById('noDataMessage');
                 if (allUsers.length === 0 && allAttempts.length === 0) {
                     noDataMessage.style.display = 'block';
@@ -647,64 +601,45 @@
             }
         }
 
-        // Update statistics
         function updateStatistics() {
-            // User statistics
             document.getElementById('totalUsers').textContent = allUsers.length;
             document.getElementById('quizAttempts').textContent = allAttempts.length;
             
-            // Calculate average score
             const totalScore = allAttempts.reduce((sum, attempt) => sum + attempt.percentage, 0);
             const avgScore = allAttempts.length > 0 ? Math.round(totalScore / allAttempts.length) : 0;
             document.getElementById('avgScore').textContent = avgScore + '%';
             
-            // Completion rate (users who attempted vs total users)
             const usersWithAttempts = allUsers.filter(user => 
                 user.quizResults && user.quizResults.length > 0
             ).length;
             const completionRate = allUsers.length > 0 ? Math.round((usersWithAttempts / allUsers.length) * 100) : 0;
             document.getElementById('completionRate').textContent = completionRate + '%';
             
-            // Analytics statistics
             document.getElementById('totalAttempts').textContent = allAttempts.length;
             document.getElementById('uniqueParticipants').textContent = new Set(allAttempts.map(a => a.userId)).size;
             
-            // Average completion time
             const totalTime = allAttempts.reduce((sum, attempt) => sum + (attempt.timeUsed || 0), 0);
             const avgTime = allAttempts.length > 0 ? Math.round(totalTime / allAttempts.length / 60) : 0;
             document.getElementById('completionTime').textContent = avgTime + 'm';
             
-            // Success rate (50% or higher)
             const successfulAttempts = allAttempts.filter(attempt => attempt.percentage >= 50).length;
             const successRate = allAttempts.length > 0 ? Math.round((successfulAttempts / allAttempts.length) * 100) : 0;
             document.getElementById('successRate').textContent = successRate + '%';
         }
 
-        // Tab navigation
         function showTab(tabName) {
-            // Hide all tabs
             document.querySelectorAll('.tab-content').forEach(tab => {
                 tab.classList.remove('active');
             });
             
-            // Remove active class from all buttons
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
             
-            // Show selected tab
             document.getElementById(tabName + '-tab').classList.add('active');
-            
-            // Add active class to clicked button
             event.target.classList.add('active');
-            
-            // Refresh data for the tab
-            if (tabName === 'analytics') {
-                updateAnalytics();
-            }
         }
 
-        // Render users table
         function renderUsersTable() {
             const tbody = document.getElementById('usersTableBody');
             tbody.innerHTML = '';
@@ -743,7 +678,6 @@
             });
         }
 
-        // Render attempts table
         function renderAttemptsTable() {
             const tbody = document.getElementById('attemptsTableBody');
             tbody.innerHTML = '';
@@ -770,7 +704,6 @@
             });
         }
 
-        // Search functions
         function searchUsers() {
             const searchTerm = document.getElementById('userSearch').value.toLowerCase();
             const rows = document.querySelectorAll('#usersTableBody tr');
@@ -791,7 +724,6 @@
             });
         }
 
-        // Export functions
         function exportUsersJSON() {
             const dataStr = JSON.stringify(allUsers, null, 2);
             downloadFile(dataStr, 'quiz-users.json', 'application/json');
@@ -846,7 +778,6 @@
             downloadFile(csvContent, 'quiz-attempts.csv', 'text/csv');
         }
 
-        // Utility functions
         function formatDate(dateString) {
             if (!dateString) return 'N/A';
             const date = new Date(dateString);
@@ -921,11 +852,6 @@
             }
         }
 
-        function updateAnalytics() {
-            // Additional analytics updates can go here
-            console.log('Analytics tab activated');
-        }
-
         function createBackup() {
             const allData = {
                 users: allUsers,
@@ -959,7 +885,6 @@
             reader.readAsText(file);
         }
 
-        // Initialize when page loads
         document.addEventListener('DOMContentLoaded', initAdminPanel);
     </script>
 </body>
