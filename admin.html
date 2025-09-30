@@ -4,6 +4,103 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Panel - The Conclusion Daily</title>
+    
+    <!-- === SECURITY CHECK - ADD THIS AT THE TOP === -->
+    <script>
+        // Admin Authentication Check
+        (function() {
+            // ⚠️ IMPORTANT: Change these emails to YOUR admin emails
+            const ADMIN_EMAILS = [
+                'admin@theconclusiondaily.com', 
+                'theconclusiondaily@gmail.com'  // ← CHANGE THIS TO YOUR EMAIL
+            ];
+            
+            // Get current user from localStorage
+            let currentUser = null;
+            try {
+                currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            } catch (error) {
+                console.error('Error parsing user data:', error);
+            }
+            
+            // Check if user is authenticated and is admin
+            const isAuthorized = currentUser && ADMIN_EMAILS.includes(currentUser.email.toLowerCase());
+            
+            if (!isAuthorized) {
+                // Show access denied page
+                document.write(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Access Denied</title>
+                        <style>
+                            body {
+                                margin: 0;
+                                padding: 0;
+                                font-family: Arial, sans-serif;
+                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                height: 100vh;
+                                display: flex;
+                                justify-content: center;
+                                align-items: center;
+                            }
+                            .access-denied {
+                                background: white;
+                                padding: 40px;
+                                border-radius: 15px;
+                                text-align: center;
+                                box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+                                max-width: 400px;
+                            }
+                            .icon {
+                                font-size: 4rem;
+                                margin-bottom: 20px;
+                            }
+                            h1 {
+                                color: #dc3545;
+                                margin-bottom: 20px;
+                            }
+                            p {
+                                color: #666;
+                                margin-bottom: 30px;
+                                line-height: 1.5;
+                            }
+                            .btn {
+                                background: #667eea;
+                                color: white;
+                                padding: 12px 24px;
+                                border-radius: 25px;
+                                text-decoration: none;
+                                font-weight: bold;
+                                display: inline-block;
+                                transition: all 0.3s ease;
+                            }
+                            .btn:hover {
+                                background: #5a6fd8;
+                                transform: translateY(-2px);
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="access-denied">
+                            <div class="icon">🚫</div>
+                            <h1>Access Denied</h1>
+                            <p><strong>You don't have permission to access the admin panel.</strong></p>
+                            <p style="font-size: 0.9rem; color: #888;">
+                                This area is restricted to authorized administrators only.
+                            </p>
+                            <a href="index.html" class="btn">Back to Quiz</a>
+                        </div>
+                    </body>
+                    </html>
+                `);
+                
+                // Stop execution
+                throw new Error('Unauthorized access to admin panel');
+            }
+        })();
+    </script>
+    
     <style>
         * {
             margin: 0;
@@ -328,27 +425,6 @@
                 width: 100%;
             }
         }
-
-        /* Print Styles */
-        @media print {
-            body {
-                background: white;
-            }
-
-            .admin-header,
-            .stats-grid,
-            .tabs,
-            .action-buttons,
-            .export-section {
-                display: none;
-            }
-
-            .tab-content {
-                display: block !important;
-                box-shadow: none;
-                background: white;
-            }
-        }
     </style>
 </head>
 <body>
@@ -475,7 +551,6 @@
             <div style="background: white; padding: 20px; border-radius: 10px; margin-top: 20px;">
                 <h3>Score Distribution</h3>
                 <div id="scoreChart" style="height: 300px; margin-top: 20px;">
-                    <!-- Score chart will be rendered here -->
                     <p style="text-align: center; color: #666; padding: 40px;">
                         Score distribution chart will appear here when data is available
                     </p>
@@ -525,12 +600,25 @@
     </div>
 
     <script>
+        // ⚠️ IMPORTANT: Change this to your actual admin email
+        const ADMIN_EMAILS = [
+            'admin@theconclusiondaily.com', 
+            'theconclusiondaily@gmail.com'  // ← CHANGE THIS TO YOUR EMAIL
+        ];
+
         // Admin Panel JavaScript
         let allUsers = [];
         let allAttempts = [];
 
         // Initialize admin panel
         function initAdminPanel() {
+            // Double-check authorization
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            if (!currentUser || !ADMIN_EMAILS.includes(currentUser.email.toLowerCase())) {
+                window.location.href = 'index.html';
+                return;
+            }
+
             loadData();
             updateStatistics();
             showTab('users');
@@ -831,6 +919,44 @@
             if (attempt) {
                 alert(`Attempt Details:\n\nUser: ${attempt.userName}\nScore: ${attempt.score}/${attempt.total}\nPercentage: ${attempt.percentage}%\nTime: ${formatTime(attempt.timeUsed)}\nDate: ${attempt.date} ${attempt.time}`);
             }
+        }
+
+        function updateAnalytics() {
+            // Additional analytics updates can go here
+            console.log('Analytics tab activated');
+        }
+
+        function createBackup() {
+            const allData = {
+                users: allUsers,
+                attempts: allAttempts,
+                backupDate: new Date().toISOString()
+            };
+            const dataStr = JSON.stringify(allData, null, 2);
+            downloadFile(dataStr, 'quiz-backup-' + new Date().toISOString().split('T')[0] + '.json', 'application/json');
+        }
+
+        function restoreBackup() {
+            document.getElementById('backupFile').click();
+        }
+
+        function handleBackupFile(file) {
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const backupData = JSON.parse(e.target.result);
+                    if (backupData.users) localStorage.setItem('quizUsers', JSON.stringify(backupData.users));
+                    if (backupData.attempts) localStorage.setItem('quizAttempts', JSON.stringify(backupData.attempts));
+                    alert('Backup restored successfully!');
+                    loadData();
+                    updateStatistics();
+                } catch (error) {
+                    alert('Error restoring backup: Invalid file format');
+                }
+            };
+            reader.readAsText(file);
         }
 
         // Initialize when page loads
