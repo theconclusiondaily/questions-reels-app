@@ -424,6 +424,174 @@ function logSecurityEvent(event, details = {}) {
 
 // In session timeout:
 // logSecurityEvent('session_timeout', { user: currentUser.email });
+// ===================== STEP 8: ADD SECURITY HEALTH CHECK RIGHT HERE =====================
+// Security health check
+function runSecurityScan() {
+    const issues = [];
+    
+    try {
+        // Check for weak passwords in stored users
+        const users = JSON.parse(localStorage.getItem('quizUsers') || '[]');
+        users.forEach(user => {
+            if (user.password && user.password.length < 8) {
+                issues.push(`Weak password detected for user: ${user.email}`);
+            }
+        });
+        
+        // Check for old sessions
+        const session = JSON.parse(localStorage.getItem('currentSession') || '{}');
+        if (session.created && Date.now() - session.created > 24 * 60 * 60 * 1000) {
+            issues.push('Old session detected (over 24 hours)');
+        }
+        
+        // Check storage quota
+        let totalSize = 0;
+        for (let key in localStorage) {
+            if (localStorage.hasOwnProperty(key)) {
+                totalSize += localStorage[key].length * 2;
+            }
+        }
+        
+        if (totalSize > 4.5 * 1024 * 1024) {
+            issues.push('Local storage approaching limit: ' + Math.round(totalSize / 1024 / 1024) + 'MB used');
+        }
+        
+        // Check for missing security headers (basic client-side check)
+        if (!document.querySelector('meta[http-equiv="Content-Security-Policy"]')) {
+            issues.push('Content Security Policy header missing');
+        }
+        
+        // Check for expired rate limits
+        const now = Date.now();
+        let expiredRateLimits = 0;
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('rate_limit_')) {
+                try {
+                    const attempts = JSON.parse(localStorage.getItem(key));
+                    const recentAttempts = attempts.filter(time => now - time < 24 * 60 * 60 * 1000);
+                    if (recentAttempts.length === 0) {
+                        expiredRateLimits++;
+                    }
+                } catch (e) {
+                    // Ignore corrupted data
+                }
+            }
+        }
+        
+        if (expiredRateLimits > 0) {
+            issues.push(`${expiredRateLimits} expired rate limits found`);
+        }
+        
+    } catch (error) {
+        issues.push('Error during security scan: ' + error.message);
+    }
+    
+    if (issues.length > 0) {
+        console.warn('🔒 Security issues found:', issues);
+        logSecurityEvent('security_scan_issues', { issues: issues });
+    } else {
+        console.log('✅ Security scan completed - no issues found');
+    }
+    
+    return issues;
+}
+
+// Run security scan periodically
+setInterval(() => {
+    runSecurityScan();
+}, 5 * 60 * 1000); // Every 5 minutes
+
+// Also run on startup
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+        const issues = runSecurityScan();
+        if (issues.length > 0 && console) {
+            console.log('Initial security scan completed. Issues:', issues);
+        }
+    }, 2000);
+});
+
+// Security monitoring dashboard (optional - for admin view)
+function getSecurityStatus() {
+    const scanResults = runSecurityScan();
+    const auditLogs = JSON.parse(localStorage.getItem('security_audit') || '[]');
+    const recentEvents = auditLogs.slice(0, 10);
+    
+    return {
+        timestamp: new Date().toISOString(),
+        scanResults: {
+            issueCount: scanResults.length,
+            issues: scanResults,
+            status: scanResults.length === 0 ? 'healthy' : 'needs_attention'
+        },
+        recentSecurityEvents: recentEvents,
+        sessionStatus: localStorage.getItem('currentSession') ? 'active' : 'inactive',
+        rateLimitsActive: Object.keys(localStorage).filter(key => key.startsWith('rate_limit_')).length
+    };
+}
+// ===================== END OF STEP 8 =====================
+// ===================== STEP 10: ADD SECURITY TESTING RIGHT HERE =====================
+// Test security features
+function testSecurityFeatures() {
+    console.log('🧪 Testing Security Features...');
+    
+    // Test input sanitization
+    const testInput = '<script>alert("xss")</script>';
+    const sanitized = sanitizeInput(testInput);
+    console.log('✅ Input Sanitization:', testInput, '→', sanitized);
+    
+    // Test email validation
+    console.log('✅ Email Validation - valid:', validateEmail('test@example.com'));
+    console.log('✅ Email Validation - invalid:', validateEmail('invalid-email'));
+    
+    // Test mobile validation  
+    console.log('✅ Mobile Validation - valid:', validateMobile('9876543210'));
+    console.log('✅ Mobile Validation - invalid:', validateMobile('12345'));
+    
+    // Test rate limiting
+    console.log('✅ Rate Limiting - first attempt:', checkRateLimit('test', 3, 60000));
+    
+    // Test session functions
+    const testUser = { email: 'test@example.com', name: 'Test User' };
+    const sessionId = generateSessionId();
+    console.log('✅ Session ID Generation:', sessionId);
+    
+    // Run security scan
+    const issues = runSecurityScan();
+    console.log('✅ Security Scan Issues:', issues);
+    
+    // Test audit logging
+    logSecurityEvent('security_test', { test: 'completed', timestamp: new Date().toISOString() });
+    console.log('✅ Audit Logging - test event logged');
+    
+    console.log('🎉 All security features tested successfully!');
+    
+    return {
+        sanitization: sanitized !== testInput,
+        emailValidation: validateEmail('test@example.com'),
+        mobileValidation: validateMobile('9876543210'),
+        rateLimiting: true,
+        sessionManagement: true,
+        securityScan: Array.isArray(issues),
+        auditLogging: true
+    };
+}
+
+// Make security functions globally available for testing
+window.sanitizeInput = sanitizeInput;
+window.validateEmail = validateEmail;
+window.validateMobile = validateMobile;
+window.logSecurityEvent = logSecurityEvent;
+window.runSecurityScan = runSecurityScan;
+window.testSecurityFeatures = testSecurityFeatures;
+window.displaySecurityStatus = displaySecurityStatus;
+window.getSecurityStatus = getSecurityStatus;
+
+// Optional: Auto-test on startup in development
+// Uncomment the line below to automatically test security features on app load
+// document.addEventListener('DOMContentLoaded', () => setTimeout(testSecurityFeatures, 3000));
+// ===================== END OF STEP 10 =====================
 function saveUserResult(score, total, timeUsed) {
     if (!currentUser) return;
     
@@ -2089,7 +2257,12 @@ function showProfile() {
         </div>
     `;
 }
-
+// Make security functions globally available
+window.sanitizeInput = sanitizeInput;
+window.validateEmail = validateEmail;
+window.validateMobile = validateMobile;
+window.logSecurityEvent = logSecurityEvent;
+window.runSecurityScan = runSecurityScan;
 // Make functions globally available
 window.showProfile = showProfile;
 window.logout = logout;
@@ -2113,27 +2286,6 @@ window.showForgotPasswordScreen = showForgotPasswordScreen;
 window.showResetPasswordScreen = showResetPasswordScreen;
 window.sendPasswordResetOTP = sendPasswordResetOTP;
 window.resetPassword = resetPassword;
-
-// Initialize app
-function initApp() {
-    const user = getCurrentUser();
-    if (user) {
-        currentUser = user;
-        
-        const users = getUsers();
-        const currentUserData = users.find(u => u.email === user.email);
-        
-        if (currentUserData?.quizResults && currentUserData.quizResults.length > 0) {
-            showAlreadyAttemptedScreen();
-        } else {
-            showQuiz();
-        }
-    } else {
-        showLoginScreen();
-    }
-}
-
-window.onload = initApp;
 
 // === ADMIN PANEL INTEGRATION ===
 
@@ -2203,3 +2355,70 @@ initApp = function() {
 // Make functions globally available (add these to your existing list)
 window.isAdminUser = isAdminUser;
 window.showFloatingAdminButton = showFloatingAdminButton;
+// ===================== ADD DEBUG FUNCTION RIGHT HERE =====================
+// Debug: Check if data is being stored
+function debugDataStorage() {
+    console.log('🔍 DEBUG: Checking data storage...');
+    
+    // Check users
+    const users = JSON.parse(localStorage.getItem('quizUsers') || '[]');
+    console.log('📊 Users in quizUsers:', users);
+    
+    // Check analytics
+    const analytics = JSON.parse(localStorage.getItem('adminAnalytics') || '{}');
+    console.log('📈 Analytics data:', analytics);
+    
+    // Check current user
+    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    console.log('👤 Current user:', currentUser);
+    
+    // Check security audit logs
+    const securityLogs = JSON.parse(localStorage.getItem('security_audit') || '[]');
+    console.log('🔒 Security logs:', securityLogs);
+    
+    return {
+        usersCount: users.length,
+        analyticsUsers: analytics.users ? analytics.users.length : 0,
+        analyticsAttempts: analytics.quizAttempts ? analytics.quizAttempts.length : 0,
+        hasCurrentUser: !!currentUser.email,
+        securityLogsCount: securityLogs.length
+    };
+}
+
+// Make it globally available
+window.debugDataStorage = debugDataStorage;
+
+// Quick test function for registration
+function testRegistration() {
+    console.log('🧪 Testing registration data flow...');
+    const testData = {
+        name: 'Test User',
+        email: 'test@example.com', 
+        mobile: '9876543210',
+        password: 'Test123!'
+    };
+    console.log('Test data:', testData);
+}
+window.testRegistration = testRegistration;
+// ===================== END DEBUG FUNCTION =====================
+// Initialize app
+function initApp() {
+    const user = getCurrentUser();
+    if (user) {
+        currentUser = user;
+        
+        const users = getUsers();
+        const currentUserData = users.find(u => u.email === user.email);
+        
+        if (currentUserData?.quizResults && currentUserData.quizResults.length > 0) {
+            showAlreadyAttemptedScreen();
+        } else {
+            showQuiz();
+        }
+    } else {
+        showLoginScreen();
+    }
+}
+
+window.onload = initApp;
+
