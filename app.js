@@ -577,7 +577,35 @@ function testSecurityFeatures() {
         auditLogging: true
     };
 }
+// ===================== ADD MISSING FUNCTION =====================
+// Display security status (for admin panel)
+function displaySecurityStatus() {
+    if (!currentUser || !isAdminUser(currentUser)) {
+        console.log('🔒 Security status: Admin access required');
+        return { status: 'admin_access_required' };
+    }
+    
+    const status = getSecurityStatus();
+    console.log('🔒 Security Status:', status);
+    
+    // Return security status for display
+    const securityStatus = {
+        lastScan: new Date().toLocaleString(),
+        issues: status.scanResults.issues.length,
+        activeSessions: localStorage.getItem('currentSession') ? 1 : 0,
+        recentEvents: status.recentSecurityEvents.length,
+        totalUsers: status.scanResults.summary?.totalUsers || 0,
+        totalAttempts: status.scanResults.summary?.totalAttempts || 0,
+        averageScore: status.scanResults.summary?.averageScore || 0,
+        status: status.scanResults.status
+    };
+    
+    console.log('📊 Security Summary:', securityStatus);
+    return securityStatus;
+}
 
+
+// ===================== END MISSING FUNCTION =====================
 // Make security functions globally available for testing
 window.sanitizeInput = sanitizeInput;
 window.validateEmail = validateEmail;
