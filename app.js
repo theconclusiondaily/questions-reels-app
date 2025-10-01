@@ -119,6 +119,42 @@ let currentUser = null;
 let quizTimer = null;
 let timeLeft = 1800; // 30 minutes in seconds
 const container = document.getElementById('root');
+// ===================== EMERGENCY PASSWORD FIX - ADD AT TOP =====================
+// Simple password functions (no hashing)
+async function hashPassword(password) {
+    console.log('🔐 Storing password:', password);
+    return password; // Store plain text (TEMPORARY)
+}
+
+async function verifyPassword(password, hashedPassword) {
+    console.log('🔐 Verifying:', password, 'vs', hashedPassword);
+    return password === hashedPassword; // Compare plain text
+}
+
+// Simple reset function
+function resetAllPasswords() {
+    console.log('🔄 Resetting passwords...');
+    
+    const users = JSON.parse(localStorage.getItem('quizUsers') || '[]');
+    const defaultPassword = 'Test123!';
+    
+    users.forEach(user => {
+        user.password = defaultPassword;
+        console.log(`✅ Reset ${user.email} to: ${defaultPassword}`);
+    });
+    
+    localStorage.setItem('quizUsers', JSON.stringify(users));
+    console.log('🎉 All passwords reset to:', defaultPassword);
+    alert('All passwords reset to: ' + defaultPassword);
+    
+    return users;
+}
+
+// Make available immediately
+window.hashPassword = hashPassword;
+window.verifyPassword = verifyPassword;
+window.resetAllPasswords = resetAllPasswords;
+// ===================== END EMERGENCY FIX =====================
 // ===================== SECURITY ENHANCEMENTS =====================
 // ADD THIS SECURITY CONFIG RIGHT HERE:
 const SECURITY_CONFIG = {
@@ -2321,7 +2357,7 @@ window.resetPassword = resetPassword;
 function isAdminUser(user) {
     const adminEmails = [
         'admin@theconclusiondaily.com',
-        'theconclusiondaily@gmail.com'  // ← Change this to your email
+        
     ];
     return adminEmails.includes(user.email.toLowerCase());
 }
@@ -2429,6 +2465,67 @@ function testRegistration() {
 }
 window.testRegistration = testRegistration;
 // ===================== END DEBUG FUNCTION =====================
+// ===================== ADD PASSWORD RESET HERE =====================
+// TEMPORARY: Reset all passwords (run this once in console)
+async function resetAllPasswords() {
+    try {
+        console.log('🔄 Starting password reset...');
+        
+        // Check if users exist
+        const users = JSON.parse(localStorage.getItem('quizUsers') || '[]');
+        console.log('Found users:', users);
+        
+        if (users.length === 0) {
+            console.log('❌ No users found in storage');
+            alert('No users found to reset!');
+            return;
+        }
+        
+        const defaultPassword = 'Test123!';
+        
+        // Reset each password
+        for (let user of users) {
+            console.log(`Resetting password for: ${user.email}`);
+            user.password = await hashPassword(defaultPassword);
+            console.log(`✅ Reset complete for: ${user.email}`);
+        }
+        
+        // Save back to storage
+        localStorage.setItem('quizUsers', JSON.stringify(users));
+        console.log('🎉 All passwords reset to: ' + defaultPassword);
+        console.log('Updated users:', users);
+        alert('✅ All passwords reset to: ' + defaultPassword);
+        
+        return users;
+    } catch (error) {
+        console.error('❌ Password reset failed:', error);
+        alert('Password reset failed: ' + error.message);
+    }
+}
+
+// Make it available in console
+window.resetAllPasswords = resetAllPasswords;
+
+// Test if hashPassword function exists
+function testHashPassword() {
+    console.log('🧪 Testing hashPassword function...');
+    
+    if (typeof hashPassword === 'function') {
+        console.log('✅ hashPassword function exists');
+        // Test it with a simple password
+        hashPassword('test').then(hash => {
+            console.log('✅ hashPassword works. Hash:', hash);
+        }).catch(error => {
+            console.error('❌ hashPassword error:', error);
+        });
+    } else {
+        console.error('❌ hashPassword function NOT found!');
+    }
+}
+
+window.testHashPassword = testHashPassword;
+// ===================== END PASSWORD RESET =====================
+
 // Initialize app
 function initApp() {
     const user = getCurrentUser();
@@ -2449,4 +2546,5 @@ function initApp() {
 }
 
 window.onload = initApp;
+
 
