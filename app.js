@@ -801,20 +801,16 @@ function autoSubmitQuiz() {
 }
 / === AUTOMATIC DATA STORAGE FUNCTIONS === //
 
-// Store complete user registration data in analytics
+// Store complete user registration data in analytics - UPDATED VERSION
 function storeUserInAnalytics(userData) {
     try {
-        // Get existing analytics data
-        const analyticsData = JSON.parse(localStorage.getItem('adminAnalytics')) || {
-            users: [],
-            quizAttempts: [],
-            summary: {
-                totalUsers: 0,
-                totalAttempts: 0,
-                averageScore: 0,
-                registrationDates: []
-            }
-        };
+        console.log('📊 Storing user in analytics:', userData.email);
+        console.log('📝 User data received:', userData);
+        
+        // Initialize analytics if needed
+        let analyticsData = JSON.parse(localStorage.getItem('adminAnalytics') || '{"users":[],"quizAttempts":[],"summary":{"totalUsers":0,"totalAttempts":0,"averageScore":0,"registrationDates":[]}}');
+        
+        console.log('📈 Current analytics data:', analyticsData);
         
         // Store user data (without password for security)
         const userAnalytics = {
@@ -825,25 +821,106 @@ function storeUserInAnalytics(userData) {
             registrationDate: userData.registrationDate,
             registrationIP: userData.registrationIP || 'unknown',
             deviceInfo: userData.deviceInfo || 'unknown',
-            isActive: userData.isActive
+            isActive: userData.isActive,
+            lastUpdated: new Date().toISOString()
         };
+        
+        console.log('👤 User analytics object:', userAnalytics);
         
         // Check if user already exists in analytics
         const existingUserIndex = analyticsData.users.findIndex(u => u.userId === userData.id);
+        console.log('🔍 Existing user index:', existingUserIndex);
+        
         if (existingUserIndex === -1) {
+            // Add new user
             analyticsData.users.push(userAnalytics);
             analyticsData.summary.totalUsers = analyticsData.users.length;
             analyticsData.summary.registrationDates.push(userData.registrationDate);
+            console.log('✅ Added new user to analytics');
+        } else {
+            // Update existing user
+            analyticsData.users[existingUserIndex] = userAnalytics;
+            console.log('✅ Updated existing user in analytics');
         }
         
-        // Save updated analytics
+        // CRITICAL: Save back to localStorage
         localStorage.setItem('adminAnalytics', JSON.stringify(analyticsData));
-        console.log('✅ User data stored in admin analytics:', userData.email);
+        console.log('💾 Saved analytics data to localStorage');
+        
+        // VERIFY: Check if it was actually saved
+        const verifyData = JSON.parse(localStorage.getItem('adminAnalytics') || '{}');
+        console.log('🔍 VERIFICATION - Analytics users count:', verifyData.users ? verifyData.users.length : 0);
+        console.log('🔍 VERIFICATION - Last user email:', verifyData.users && verifyData.users.length > 0 ? verifyData.users[verifyData.users.length - 1].email : 'none');
+        
+        console.log('🎉 User data successfully stored in admin analytics:', userData.email);
         
     } catch (error) {
-        console.error('Error storing user in analytics:', error);
+        console.error('❌ Error storing user in analytics:', error);
+        console.error('Error details:', error.message);
     }
 }
+window.storeUserInAnalytics = storeUserInAnalytics;
+// ===================== ADD initializeAdminAnalytics RIGHT HERE =====================
+// Initialize and ensure admin analytics data exists
+function initializeAdminAnalytics() {
+    try {
+        console.log('🔄 Initializing admin analytics...');
+        
+        const defaultAnalytics = {
+            users: [],
+            quizAttempts: [],
+            summary: {
+                totalUsers: 0,
+                totalAttempts: 0,
+                averageScore: 0,
+                registrationDates: []
+            }
+        };
+        
+        // Get or create analytics data
+        let analyticsData = JSON.parse(localStorage.getItem('adminAnalytics') || 'null');
+        
+        if (!analyticsData) {
+            console.log('📊 Creating new admin analytics storage');
+            analyticsData = defaultAnalytics;
+            localStorage.setItem('adminAnalytics', JSON.stringify(analyticsData));
+        } else {
+            console.log('📊 Existing admin analytics found');
+        }
+        
+        // Migrate existing users to analytics if needed
+        const quizUsers = JSON.parse(localStorage.getItem('quizUsers') || '[]');
+        if (quizUsers.length > 0 && (!analyticsData.users || analyticsData.users.length === 0)) {
+            console.log('🔄 Migrating existing users to analytics...');
+            analyticsData.users = quizUsers.map(user => ({
+                userId: user.id,
+                email: user.email,
+                name: user.name,
+                mobile: user.mobile,
+                registrationDate: user.registrationDate || new Date().toISOString(),
+                registrationIP: user.registrationIP || 'unknown',
+                deviceInfo: user.deviceInfo || 'unknown',
+                isActive: user.isActive !== undefined ? user.isActive : true
+            }));
+            analyticsData.summary.totalUsers = analyticsData.users.length;
+            localStorage.setItem('adminAnalytics', JSON.stringify(analyticsData));
+            console.log('✅ Users migrated to analytics:', analyticsData.users.length);
+        }
+        
+        return analyticsData;
+    } catch (error) {
+        console.error('❌ Analytics initialization failed:', error);
+        return {
+            users: [],
+            quizAttempts: [],
+            summary: { totalUsers: 0, totalAttempts: 0, averageScore: 0, registrationDates: [] }
+        };
+    }
+}
+
+// Make it globally available
+window.initializeAdminAnalytics = initializeAdminAnalytics;
+// ===================== END initializeAdminAnalytics =====================
 
 // Store quiz results in analytics
 function storeQuizResultsInAnalytics(score, timeUsed) {
@@ -908,14 +985,29 @@ function storeQuizResultsInAnalytics(score, timeUsed) {
     }
 }
 
-// Get client IP address
+// Find and REPLACE your getClientIP function with this:
 async function getClientIP() {
     try {
+        console.log('🌐 Attempting to get IP address...');
+        
+        // Try the IP API
         const response = await fetch('https://api.ipify.org?format=json');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const data = await response.json();
+        console.log('✅ IP address obtained:', data.ip);
         return data.ip;
+        
     } catch (error) {
-        return 'unknown';
+        console.log('🌐 IP API blocked or failed, using fallback');
+        
+        // FALLBACK: Don't use external API at all
+        const fallbackIP = 'local-' + Math.random().toString(36).substr(2, 8);
+        console.log('🌐 Using fallback IP:', fallbackIP);
+        return fallbackIP;
     }
 }
 function showLoginScreen() {
@@ -1443,6 +1535,26 @@ async function register() {
             clearSensitiveData();
             
             setCurrentUser(newUser);
+              // ========== ADD SAFETY CHECK HERE ==========
+    if (typeof storeUserInAnalytics === 'function') {
+        storeUserInAnalytics(newUser);
+        console.log('✅ User stored in analytics');
+    } else {
+        console.error('❌ storeUserInAnalytics not available, but continuing...');
+        // Create basic analytics entry as fallback
+        const analyticsData = JSON.parse(localStorage.getItem('adminAnalytics') || '{"users":[],"quizAttempts":[],"summary":{"totalUsers":0,"totalAttempts":0,"averageScore":0,"registrationDates":[]}}');
+        analyticsData.users.push({
+            userId: newUser.id,
+            email: newUser.email,
+            name: newUser.name,
+            mobile: newUser.mobile,
+            registrationDate: newUser.registrationDate
+        });
+        analyticsData.summary.totalUsers = analyticsData.users.length;
+        localStorage.setItem('adminAnalytics', JSON.stringify(analyticsData));
+        console.log('✅ User added to analytics via fallback');
+    }
+    // ========== END SAFETY CHECK ==========
             trackEvent('registration_success');
             
             alert('🎉 Registration successful! Welcome to The Conclusion Daily.');
@@ -1485,8 +1597,11 @@ function handleRegistration(event) {
     return registerUser(email, password, name, mobile);
 }
 
+// Enhanced registerUser function - FIND AND REPLACE
 async function registerUser(email, password, name = '', mobile = '') {
     try {
+        console.log('🚀 Starting user registration...', { email, name, mobile });
+
         // Validate inputs
         if (!email || !password) {
             alert('Please fill in all required fields');
@@ -1500,15 +1615,9 @@ async function registerUser(email, password, name = '', mobile = '') {
             return false;
         }
 
-        // Password strength check
-        if (password.length < 6) {
-            alert('Password must be at least 6 characters long');
-            return false;
-        }
-
-       // Create user object with complete data
+        // Create user object with COMPLETE data
         const userData = {
-            id: Date.now(),
+            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
             email: email.toLowerCase().trim(),
             name: name.trim(),
             mobile: mobile.trim(),
@@ -1521,11 +1630,16 @@ async function registerUser(email, password, name = '', mobile = '') {
             bestScore: 0,
             lastLogin: new Date().toISOString(),
             isActive: true,
-            quizResults: []
+            quizResults: [],
+            loginAttempts: 0,
+            isVerified: true
         };
+
+        console.log('📝 User data created:', userData);
 
         // Get existing users
         let users = JSON.parse(localStorage.getItem('quizUsers')) || [];
+        console.log('📊 Existing users:', users);
         
         // Check if user exists
         const existingUser = users.find(user => user.email === userData.email);
@@ -1537,24 +1651,38 @@ async function registerUser(email, password, name = '', mobile = '') {
         // Add new user
         users.push(userData);
         localStorage.setItem('quizUsers', JSON.stringify(users));
+        console.log('✅ User saved to quizUsers');
         
-        // ✅ AUTOMATICALLY STORE IN ANALYTICS
-        storeUserInAnalytics(userData);
+        // ========== CRITICAL: STORE IN ANALYTICS ==========
+        if (typeof storeUserInAnalytics === 'function') {
+            storeUserInAnalytics(userData);
+            console.log('✅ User stored in analytics');
+        } else {
+            console.error('❌ storeUserInAnalytics not available');
+        }
         
         // Set as current user
         localStorage.setItem('currentUser', JSON.stringify(userData));
         currentUser = userData;
+        console.log('✅ Current user set');
         
-        alert('Registration successful! Welcome to the quiz.');
+        // Verify storage
+        const verifyUsers = JSON.parse(localStorage.getItem('quizUsers') || '[]');
+        const verifyAnalytics = JSON.parse(localStorage.getItem('adminAnalytics') || '{}');
+        console.log('🔍 VERIFICATION - quizUsers count:', verifyUsers.length);
+        console.log('🔍 VERIFICATION - analytics users:', verifyAnalytics.users ? verifyAnalytics.users.length : 0);
         
+        alert('🎉 Registration successful! Data saved.');
+        
+        // Redirect to quiz
         setTimeout(() => {
             showQuiz();
         }, 1000);
         
         return true;
     } catch (error) {
-        console.error('Registration error:', error);
-        alert('Registration failed. Please try again.');
+        console.error('❌ Registration error:', error);
+        alert('Registration failed: ' + error.message);
         return false;
     }
 }
@@ -2525,7 +2653,81 @@ function testHashPassword() {
 
 window.testHashPassword = testHashPassword;
 // ===================== END PASSWORD RESET =====================
+// ===================== ADD DEBUG FUNCTION HERE =====================
+// Debug function to check function availability
+function debugFunctionAvailability() {
+    console.log('🔍 CHECKING FUNCTION AVAILABILITY:');
+    console.log('storeUserInAnalytics:', typeof storeUserInAnalytics);
+    console.log('getClientIP:', typeof getClientIP);
+    console.log('registerUser:', typeof registerUser);
+    console.log('hashPassword:', typeof hashPassword);
+    console.log('showLoginScreen:', typeof showLoginScreen);
+    
+    // Check if functions are in window scope
+    console.log('window.storeUserInAnalytics:', typeof window.storeUserInAnalytics);
+    console.log('window.getClientIP:', typeof window.getClientIP);
+    
+    // Check if analytics data exists
+    const analytics = JSON.parse(localStorage.getItem('adminAnalytics') || '{}');
+    console.log('📊 Analytics users count:', analytics.users ? analytics.users.length : 0);
+    
+    return {
+        storeUserInAnalytics: typeof storeUserInAnalytics,
+        getClientIP: typeof getClientIP,
+        analyticsUsers: analytics.users ? analytics.users.length : 0
+    };
+}
 
+// Make it globally available
+window.debugFunctionAvailability = debugFunctionAvailability;
+
+// Test registration flow
+function testRegistrationFlow() {
+    console.log('🧪 TESTING REGISTRATION FLOW...');
+    
+    // Test hashPassword
+    hashPassword('test123').then(hash => {
+        console.log('✅ hashPassword works:', hash);
+    }).catch(err => {
+        console.error('❌ hashPassword failed:', err);
+    });
+    
+    // Test getClientIP
+    getClientIP().then(ip => {
+        console.log('✅ getClientIP works:', ip);
+    }).catch(err => {
+        console.error('❌ getClientIP failed:', err);
+    });
+    
+    // Test storeUserInAnalytics
+    if (typeof storeUserInAnalytics === 'function') {
+        console.log('✅ storeUserInAnalytics is available');
+        // Test with dummy data
+        storeUserInAnalytics({
+            id: 'test-id',
+            email: 'test@example.com',
+            name: 'Test User',
+            registrationDate: new Date().toISOString()
+        });
+    } else {
+        console.error('❌ storeUserInAnalytics NOT available');
+    }
+}
+
+window.testRegistrationFlow = testRegistrationFlow;
+// ===================== END DEBUG FUNCTION =====================
+
+// Your existing initApp function continues...
+function initApp() {
+    const user = getCurrentUser();
+    if (user) {
+        // ... your existing code
+    } else {
+        showLoginScreen();
+    }
+}
+
+window.onload = initApp;
 // Initialize app
 function initApp() {
     const user = getCurrentUser();
