@@ -859,6 +859,7 @@ function storeUserInAnalytics(userData) {
         console.error('Error details:', error.message);
     }
 }
+// Make it globally available
 window.storeUserInAnalytics = storeUserInAnalytics;
 // ===================== ADD initializeAdminAnalytics RIGHT HERE =====================
 // Initialize and ensure admin analytics data exists
