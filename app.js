@@ -26,14 +26,7 @@ if (typeof window.userAnswers === 'undefined') {
     window.userAnswers = {};
     console.log('✅ Global userAnswers initialized');
 }
-// Then later in your code:
-function initializeCurrentUser() {
-    currentUser = getCurrentUser() || null;
-    console.log('✅ Current user initialized:', currentUser ? currentUser.email : 'No user');
-}
 
-// Call this function when your app starts
-initializeCurrentUser();
 
 // Emergency debug code
 console.log('🔧 App starting...');
@@ -156,6 +149,15 @@ let currentUser = null;
 let quizTimer = null;
 let timeLeft = 1800; // 30 minutes in seconds
 const container = document.getElementById('root');
+
+function initializeCurrentUser() {
+    const user = getCurrentUser() || null;  // ← Use local variable
+    console.log('✅ Current user initialized:', user ? user.email : 'No user');
+    return user;  // ← Return the user
+}
+
+// Call this function when your app starts
+currentUser = initializeCurrentUser();
 // ===================== EMERGENCY PASSWORD FIX - ADD AT TOP =====================
 // Simple password functions (no hashing)
 async function hashPassword(password) {
