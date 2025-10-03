@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <!-- Security Headers -->
+    <!-- Security Headers - UPDATED FOR SUPABASE -->
     <meta http-equiv="Content-Security-Policy" 
           content="default-src 'self'; 
-                   script-src 'self' 'unsafe-inline'; 
+                   script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; 
                    style-src 'self' 'unsafe-inline'; 
                    img-src 'self' data: https:; 
-                   connect-src 'self' https://api.ipify.org;
+                   connect-src 'self' https://api.ipify.org https://rggqgrjovqncorratqxh.supabase.co;
                    font-src 'self';
                    object-src 'none';
                    base-uri 'self';
@@ -32,12 +32,14 @@
         </div>
     </div>
 
-    <!-- EMERGENCY FUNCTIONS - LOAD FIRST -->
+    <!-- 🚀 LOAD SUPABASE LIBRARY FIRST -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- EMERGENCY FUNCTIONS -->
     <script>
-        // CRITICAL: Define these functions BEFORE loading app.js
         console.log('🔄 Loading emergency functions...');
         
-        // Global logout function - defined early to prevent errors
+        // Global logout function
         window.logout = window.secureLogout = function() {
             console.log('🚪 Emergency logout called');
             try {
@@ -62,57 +64,43 @@
             }
         };
         
-        // Safe user data functions
-        window.getUserData = function() {
-            try {
-                return JSON.parse(localStorage.getItem('userData') || '{}');
-            } catch {
-                return {};
-            }
-        };
-        
-        window.isLoggedIn = function() {
-            const userData = window.getUserData();
-            return !!(userData && userData.token);
-        };
-        
-        console.log('✅ Emergency functions loaded successfully');
-        
-        // Global error handler for undefined functions
-        window.addEventListener('error', function(event) {
-            if (event.error && event.error.message.includes('is not defined')) {
-                console.warn('⚠️ Caught undefined function error:', event.error.message);
-                event.preventDefault();
-            }
-        });
+        console.log('✅ Emergency functions loaded');
     </script>
+
+    <!-- 🚀 LOAD SUPABASE CONFIGURATION -->
+    <script src="supabase.js"></script>
 
     <!-- Load main app -->
     <script src="app.js"></script>
     
-    <!-- Fallback in case app.js fails -->
+    <!-- Load status checker -->
     <script>
-        // If app.js doesn't load properly within 5 seconds, show error
+        console.log('🔍 Checking script loading status...');
+        
+        // Check if Supabase loaded properly
         setTimeout(function() {
-            if (!window.appLoaded) {
-                console.error('❌ app.js failed to load properly');
+            console.log('Supabase library:', typeof supabase);
+            console.log('Supabase client:', window.supabaseClient);
+            console.log('Test function:', typeof window.testSupabase);
+            
+            if (!window.supabaseClient) {
+                console.error('❌ Supabase client failed to load');
                 const root = document.getElementById('root');
                 if (root && root.innerHTML.includes('Loading')) {
                     root.innerHTML = `
                         <div style="padding: 20px; text-align: center; color: red;">
-                            <h1>App Loading Error</h1>
-                            <p>The quiz app failed to load. Please refresh the page.</p>
-                            <button onclick="window.location.reload()" style="padding: 10px 20px; margin: 10px;">
-                                Refresh Page
-                            </button>
-                            <button onclick="window.logout()" style="padding: 10px 20px; margin: 10px;">
-                                Go to Login
+                            <h1>Database Connection Error</h1>
+                            <p>Supabase failed to load. Check the console for errors.</p>
+                            <button onclick="window.location.reload()" style="padding: 10px 20px;">
+                                Reload Page
                             </button>
                         </div>
                     `;
                 }
+            } else {
+                console.log('✅ All scripts loaded successfully');
             }
-        }, 5000);
+        }, 1000);
     </script>
 </body>
 </html>
