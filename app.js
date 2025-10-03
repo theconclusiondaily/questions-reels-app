@@ -27,7 +27,19 @@ if (typeof window.userAnswers === 'undefined') {
     console.log('✅ Global userAnswers initialized');
 }
 
+// === EMERGENCY FIX FOR SUPABASE ISSUES ===
+// Add this right after your safety wrapper at the top
+if (typeof supabaseClient === 'undefined') {
+    console.warn('⚠️ Supabase client not found - initializing fallback mode');
+    window.supabaseClient = null;
+}
 
+// Emergency fallback function
+window.emergencySaveUserResult = function(score, total, timeUsed) {
+    console.log('🆘 Using emergency fallback for quiz results');
+    saveToLocalStorageFallback(score, total, timeUsed);
+    return null;
+};
 // Emergency debug code
 console.log('🔧 App starting...');
 
@@ -676,9 +688,17 @@ window.getSecurityStatus = getSecurityStatus;
 // document.addEventListener('DOMContentLoaded', () => setTimeout(testSecurityFeatures, 3000));
 // ===================== END OF STEP 10 =====================
 // Enhanced saveUserResult function - SUPABASE VERSION
+// Enhanced saveUserResult function - SUPABASE VERSION (FIXED)
 async function saveUserResult(score, total, timeUsed) {
     try {
         console.log('💾 Saving user quiz result to Supabase...', { score, total, timeUsed });
+
+        // ADD SAFETY CHECK: Verify Supabase client exists
+        if (typeof supabaseClient === 'undefined' || !supabaseClient) {
+            console.error('❌ Supabase client not initialized, using localStorage fallback');
+            saveToLocalStorageFallback(score, total, timeUsed);
+            return null;
+        }
 
         // Use your existing getCurrentUser function
         const currentUser = getCurrentUser();
@@ -687,7 +707,7 @@ async function saveUserResult(score, total, timeUsed) {
             console.error('❌ No user logged in for saving result');
             // Fallback to localStorage using your existing functions
             saveToLocalStorageFallback(score, total, timeUsed);
-            return;
+            return null;
         }
 
         // Prepare quiz result data for Supabase
@@ -721,7 +741,22 @@ async function saveUserResult(score, total, timeUsed) {
             
             // Fallback to localStorage
             saveToLocalStorageFallback(score, total, timeUsed);
-            return;
+            return null; // Explicitly return null
+        }
+
+        // ADD CRITICAL SAFETY CHECK: Verify savedResult exists and has data
+        if (!savedResult || !Array.isArray(savedResult) || savedResult.length === 0) {
+            console.error('❌ Supabase returned empty result:', savedResult);
+            console.log('💡 This might happen if the insert succeeded but select returned nothing');
+            
+            // Fallback to localStorage but don't crash
+            saveToLocalStorageFallback(score, total, timeUsed);
+            
+            // Still update localStorage stats for UI
+            updateLocalStorageStats(score, total, timeUsed);
+            showSaveSuccessMessage(score, total);
+            
+            return null;
         }
 
         console.log('✅ Quiz result saved to Supabase! ID:', savedResult[0].id);
@@ -736,11 +771,11 @@ async function saveUserResult(score, total, timeUsed) {
 
     } catch (error) {
         console.error('❌ Error in saveUserResult:', error);
+        console.log('💡 Error stack:', error.stack);
         saveToLocalStorageFallback(score, total, timeUsed);
         return null;
     }
 }
-
 // Fallback to localStorage if Supabase fails
 function saveToLocalStorageFallback(score, total, timeUsed) {
     try {
@@ -2689,7 +2724,7 @@ window.togglePassword = togglePassword;  // ← ADD THIS LINE
 window.checkPasswordStrength = checkPasswordStrength;  // ← ADD THIS LINE (if using strength indicator)
 window.checkPasswordMatch = checkPasswordMatch;
 window.exportUserDataForAnalytics = exportUserDataForAnalytics;
-
+window.saveUserResult = typeof saveUserResult !== 'undefined' ? saveUserResult : window.emergencySaveUserResult;
 // ADD FORGOT PASSWORD FUNCTIONS:
 window.showForgotPasswordScreen = showForgotPasswordScreen;
 window.showResetPasswordScreen = showResetPasswordScreen;

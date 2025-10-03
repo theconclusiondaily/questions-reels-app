@@ -46,72 +46,128 @@ if (typeof supabase !== 'undefined') {
 
 function setupFunctions(client) {
     // Enhanced test function
-    window.testSupabase = async function() {
-        console.log('🧪 Testing Supabase connection...');
+ // Replace your testSupabase function with this fixed version:
+// Replace your testSupabase function with this:
+window.testSupabase = async function() {
+    console.log('🧪 Testing Supabase connection...');
+    
+    try {
+        // Test 1: Basic connection
+        const { data, error } = await supabaseClient.from('users').select('count');
         
-        if (!client) {
-            console.error('❌ No Supabase client available');
+        if (error) {
+            console.error('❌ Connection test failed:', error);
             return false;
         }
         
-        try {
-            // Test 1: Basic connection
-            const { data, error } = await client.from('users').select('count');
+        console.log('✅ Supabase connection successful!');
+        console.log('📊 Database response:', data);
+        
+        // Test 2: Try to insert a test user with ALL required fields
+        console.log('🧪 Testing data insertion...');
+        const testUser = {
+            email: `test${Date.now()}@test.com`,
+            username: `testuser${Date.now()}`,
+            password: 'test123',
+            mobile: '1234567890',
+            is_active: true // This is now required
+        };
+        
+        const { data: userData, error: userError } = await supabaseClient
+            .from('users')
+            .insert([testUser])
+            .select();
             
-            if (error) {
-                console.error('❌ Connection test failed:', error);
-                return false;
-            }
-            
-            console.log('✅ Supabase connection successful!');
-            console.log('📊 Database response:', data);
-            
-            // Test 2: Try to insert a test user
-            console.log('🧪 Testing data insertion...');
-            const testUser = {
-                email: `test${Date.now()}@test.com`,
-                username: `testuser${Date.now()}`,
-                password: 'test123',
-                mobile: '1234567890'
-            };
-            
-            const { data: userData, error: userError } = await client
-                .from('users')
-                .insert([testUser])
-                .select();
-                
-            if (userError) {
-                console.error('❌ Insert test failed:', userError);
-                // This might be expected if table doesn't exist yet
-                return true; // Still return true for connection
-            }
-            
-            console.log('✅ Data insertion test passed! User ID:', userData[0].id);
-            
-            // Test 3: Verify we can read data back
-            const { data: users, error: readError } = await client
-                .from('users')
-                .select('*')
-                .order('created_at', { ascending: false })
-                .limit(5);
-                
-            if (readError) {
-                console.error('❌ Read test failed:', readError);
-                return true; // Still return true for connection
-            }
-            
-            console.log('✅ Data read test passed! Total users:', users.length);
-            console.log('📋 Recent users:', users);
-            
-            alert('🎉 All Supabase tests passed! Your database is working perfectly!');
-            return true;
-            
-        } catch (error) {
-            console.error('❌ Connection test error:', error);
-            alert('❌ Connection test failed: ' + error.message);
+        if (userError) {
+            console.error('❌ Insert test failed:', userError);
             return false;
         }
-    };
+        
+        console.log('✅ Data insertion test passed! User ID:', userData[0].id);
+        console.log('📋 User details:', userData[0]);
+        
+        // Test 3: Verify we can read data back
+        const { data: users, error: readError } = await supabaseClient
+            .from('users')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(5);
+            
+        if (readError) {
+            console.error('❌ Read test failed:', readError);
+            return false;
+        }
+        
+        console.log('✅ Data read test passed! Total users:', users.length);
+        
+        // Test 4: Test quiz_results table
+        console.log('🧪 Testing quiz_results table...');
+        const testResult = {
+            user_id: userData[0].id,
+            user_email: userData[0].email,
+            username: userData[0].username,
+            score: 8,
+            total_questions: 10,
+            percentage: 80.0,
+            time_spent: 120,
+            answers: { Q1: 'A', Q2: 'B', Q3: 'C' },
+            quiz_type: 'general'
+        };
+        
+        const { data: resultData, error: resultError } = await supabaseClient
+            .from('quiz_results')
+            .insert([testResult])
+            .select();
+            
+        if (resultError) {
+            console.error('❌ Quiz result insert failed:', resultError);
+            // This might be expected if quiz_results table has similar issues
+        } else {
+            console.log('✅ Quiz result insert passed! Result ID:', resultData[0].id);
+        }
+        
+        alert('🎉 Supabase connection successful! Database is working!');
+        return true;
+        
+    } catch (error) {
+        console.error('❌ Connection test error:', error);
+        alert('❌ Connection test failed: ' + error.message);
+        return false;
+    }
+};
+
+// Add this helper function to check table structure
+async function checkTableStructure() {
+    console.log('🔍 Checking table structure requirements...');
+    
+    try {
+        // Try minimal insert to see what's absolutely required
+        const minimalUser = {
+            email: `minimaltest${Date.now()}@test.com`,
+            username: `minimaltest`,
+            password: 'test123'
+        };
+        
+        const { data, error } = await supabaseClient
+            .from('users')
+            .insert([minimalUser])
+            .select();
+            
+        if (error) {
+            console.log('❌ Minimal insert failed:', error.message);
+            console.log('💡 You need to provide these additional fields or make them nullable in Supabase');
+        } else {
+            console.log('✅ Minimal insert worked! Only these fields are required:');
+            console.log('- email, username, password');
+            
+            // Clean up
+            await supabaseClient.from('users').delete().eq('id', data[0].id);
+        }
+        
+    } catch (error) {
+        console.error('Structure check failed:', error);
+    }
+}
 
     // Quick connection check
     window.quickCheck = async function() {
