@@ -26,10 +26,6 @@ if (typeof window.userAnswers === 'undefined') {
     window.userAnswers = {};
     console.log('✅ Global userAnswers initialized');
 }
-
-// At the VERY TOP of app.js, add:
-let currentUser = null;
-
 // Then later in your code:
 function initializeCurrentUser() {
     currentUser = getCurrentUser() || null;
