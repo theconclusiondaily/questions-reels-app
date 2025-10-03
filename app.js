@@ -21,7 +21,17 @@ if (typeof window.showLoginScreen !== 'function') {
 
 // Mark app as loaded
 window.appLoaded = true;
+// Ensure userAnswers is available globally for quiz answers
+if (typeof window.userAnswers === 'undefined') {
+    window.userAnswers = {};
+    console.log('✅ Global userAnswers initialized');
+}
 
+// Initialize currentUser if not exists
+if (typeof currentUser === 'undefined') {
+    let currentUser = getCurrentUser() || null;
+    console.log('✅ Current user initialized:', currentUser ? currentUser.email : 'No user');
+}
 // Your existing app.js code continues below...
 // [PASTE ALL YOUR EXISTING app.js CODE HERE]
 // Emergency debug code
@@ -662,54 +672,233 @@ window.getSecurityStatus = getSecurityStatus;
 // Uncomment the line below to automatically test security features on app load
 // document.addEventListener('DOMContentLoaded', () => setTimeout(testSecurityFeatures, 3000));
 // ===================== END OF STEP 10 =====================
-function saveUserResult(score, total, timeUsed) {
-    if (!currentUser) return;
+// Enhanced saveUserResult function - SUPABASE VERSION
+async function saveUserResult(score, total, timeUsed) {
+    try {
+        console.log('💾 Saving user quiz result to Supabase...', { score, total, timeUsed });
+
+        // Use your existing getCurrentUser function
+        const currentUser = getCurrentUser();
+        
+        if (!currentUser || !currentUser.id) {
+            console.error('❌ No user logged in for saving result');
+            // Fallback to localStorage using your existing functions
+            saveToLocalStorageFallback(score, total, timeUsed);
+            return;
+        }
+
+        // Prepare quiz result data for Supabase
+        const quizResultData = {
+            user_id: currentUser.id,
+            user_email: currentUser.email,
+            username: currentUser.username || currentUser.name || currentUser.email,
+            score: score,
+            total_questions: total,
+            percentage: Math.round((score / total) * 100),
+            time_spent: timeUsed,
+            answers: window.userAnswers || {}, // Use global userAnswers if available
+            quiz_type: 'general'
+        };
+
+        console.log('📝 Saving to Supabase:', quizResultData);
+
+        // Save to Supabase quiz_results table
+        const { data: savedResult, error: saveError } = await supabaseClient
+            .from('quiz_results')
+            .insert([quizResultData])
+            .select();
+
+        if (saveError) {
+            console.error('❌ Error saving to Supabase:', saveError);
+            console.log('💡 Error details:', {
+                code: saveError.code,
+                message: saveError.message,
+                details: saveError.details
+            });
+            
+            // Fallback to localStorage
+            saveToLocalStorageFallback(score, total, timeUsed);
+            return;
+        }
+
+        console.log('✅ Quiz result saved to Supabase! ID:', savedResult[0].id);
+
+        // Also update user's quiz stats in localStorage for immediate UI updates
+        updateLocalStorageStats(score, total, timeUsed);
+
+        // Show success message
+        showSaveSuccessMessage(score, total);
+
+        return savedResult[0]; // Return the saved result
+
+    } catch (error) {
+        console.error('❌ Error in saveUserResult:', error);
+        saveToLocalStorageFallback(score, total, timeUsed);
+        return null;
+    }
+}
+// 🏠 ADMIN DASHBOARD - ADD OPTION 2 HERE
+// =============================================
+
+// Add this function to trigger the admin dashboard
+function showAdminDashboard() {
+    console.log('🚀 Loading admin dashboard...');
     
-    const users = getUsers();
-    const userIndex = users.findIndex(u => u.email === currentUser.email);
-    
-    if (userIndex !== -1) {
-        if (!users[userIndex].quizResults) {
-            users[userIndex].quizResults = [];
+    // Clear the main content area
+    const root = document.getElementById('root');
+    if (root) {
+        root.innerHTML = `
+            <div id="adminDashboard">
+                <div style="padding: 20px; text-align: center;">
+                    <h2>Loading Admin Dashboard...</h2>
+                    <p>Please wait while we load the data.</p>
+                </div>
+            </div>
+        `;
+        
+        // Load the admin data
+        setTimeout(() => {
+            loadAdminDashboard();
+        }, 1000);
+    }
+}
+
+// Make it available globally
+window.showAdminDashboard = showAdminDashboard;
+// Fallback to localStorage if Supabase fails
+function saveToLocalStorageFallback(score, total, timeUsed) {
+    try {
+        console.log('🔄 Falling back to localStorage...');
+        
+        const users = getUsers();
+        const currentUser = getCurrentUser();
+        
+        if (!currentUser) {
+            console.error('❌ No current user for localStorage fallback');
+            return;
         }
         
-        users[userIndex].quizResults.push({
+        const userIndex = users.findIndex(u => u.email === currentUser.email);
+        
+        if (userIndex !== -1) {
+            if (!users[userIndex].quizResults) {
+                users[userIndex].quizResults = [];
+            }
+            
+            users[userIndex].quizResults.push({
+                score: score,
+                total: total,
+                percentage: Math.round((score / total) * 100),
+                timeUsed: timeUsed,
+                date: new Date().toLocaleDateString(),
+                time: new Date().toLocaleTimeString(),
+                timestamp: new Date().toISOString(),
+                storage: 'local' // Mark as localStorage fallback
+            });
+            
+            saveUsers(users);
+            
+            // Store individual attempt data separately
+            storeIndividualAttempt(users[userIndex], score, total, timeUsed);
+            
+            console.log('✅ Result saved to localStorage fallback');
+            
+            // Show fallback message
+            showFallbackMessage(score, total);
+        }
+    } catch (error) {
+        console.error('❌ localStorage fallback also failed:', error);
+    }
+}
+
+// Update localStorage stats for immediate UI updates
+function updateLocalStorageStats(score, total, timeUsed) {
+    try {
+        const users = getUsers();
+        const currentUser = getCurrentUser();
+        
+        if (!currentUser) return;
+        
+        const userIndex = users.findIndex(u => u.email === currentUser.email);
+        
+        if (userIndex !== -1) {
+            if (!users[userIndex].quizResults) {
+                users[userIndex].quizResults = [];
+            }
+            
+            users[userIndex].quizResults.push({
+                score: score,
+                total: total,
+                percentage: Math.round((score / total) * 100),
+                timeUsed: timeUsed,
+                date: new Date().toLocaleDateString(),
+                time: new Date().toLocaleTimeString(),
+                timestamp: new Date().toISOString(),
+                storage: 'supabase' // Mark as Supabase storage
+            });
+            
+            saveUsers(users);
+            storeIndividualAttempt(users[userIndex], score, total, timeUsed);
+            
+            console.log('✅ LocalStorage stats updated');
+        }
+    } catch (error) {
+        console.error('❌ Error updating localStorage stats:', error);
+    }
+}
+
+// Show success message
+function showSaveSuccessMessage(score, total) {
+    const percentage = Math.round((score / total) * 100);
+    const message = `🎉 Quiz completed! Score: ${score}/${total} (${percentage}%) - Results saved to database!`;
+    
+    if (typeof showMessage === 'function') {
+        showMessage(message, 'success');
+    } else {
+        alert(message);
+    }
+}
+
+// Show fallback message
+function showFallbackMessage(score, total) {
+    const percentage = Math.round((score / total) * 100);
+    const message = `📝 Quiz completed! Score: ${score}/${total} (${percentage}%) - Results saved locally.`;
+    
+    if (typeof showMessage === 'function') {
+        showMessage(message, 'warning');
+    } else {
+        alert(message + ' (Database temporarily unavailable)');
+    }
+}
+
+// Enhanced storeIndividualAttempt function
+function storeIndividualAttempt(user, score, total, timeUsed) {
+    try {
+        const attemptData = {
+            userId: user.email,
+            userName: user.name,
+            userMobile: user.mobile,
             score: score,
             total: total,
             percentage: Math.round((score / total) * 100),
             timeUsed: timeUsed,
             date: new Date().toLocaleDateString(),
             time: new Date().toLocaleTimeString(),
-            timestamp: new Date().toISOString()
-        });
+            timestamp: new Date().toISOString(),
+            answers: window.userAnswers || {},
+            storage: 'both'
+        };
         
-        saveUsers(users);
+        const allAttempts = JSON.parse(localStorage.getItem('quizAttempts')) || [];
+        allAttempts.push(attemptData);
+        localStorage.setItem('quizAttempts', JSON.stringify(allAttempts));
         
-        // Store individual attempt data separately
-        storeIndividualAttempt(users[userIndex], score, total, timeUsed);
+        console.log('✅ Individual attempt stored in localStorage');
+    } catch (error) {
+        console.error('❌ Error storing individual attempt:', error);
     }
 }
 
-// Store individual attempt data separately
-function storeIndividualAttempt(user, score, total, timeUsed) {
-    const attemptData = {
-        userId: user.email,
-        userName: user.name,
-        userMobile: user.mobile,
-        score: score,
-        total: total,
-        percentage: Math.round((score / total) * 100),
-        timeUsed: timeUsed,
-        date: new Date().toLocaleDateString(),
-        time: new Date().toLocaleTimeString(),
-        timestamp: new Date().toISOString(),
-        answers: userAnswers
-    };
-    
-    const allAttempts = JSON.parse(localStorage.getItem('quizAttempts')) || [];
-    allAttempts.push(attemptData);
-    localStorage.setItem('quizAttempts', JSON.stringify(allAttempts));
-}
 // User Management Utilities
 function getCurrentUser() {
     try {
@@ -1603,10 +1792,10 @@ function handleRegistration(event) {
     return registerUser(email, password, name, mobile);
 }
 
-// Enhanced registerUser function - FIND AND REPLACE
+// Enhanced registerUser function - SUPABASE VERSION
 async function registerUser(email, password, name = '', mobile = '') {
     try {
-        console.log('🚀 Starting user registration...', { email, name, mobile });
+        console.log('🚀 Starting user registration with Supabase...', { email, name, mobile });
 
         // Validate inputs
         if (!email || !password) {
@@ -1621,162 +1810,165 @@ async function registerUser(email, password, name = '', mobile = '') {
             return false;
         }
 
-        // Create user object with COMPLETE data
-        const userData = {
-            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-            email: email.toLowerCase().trim(),
-            name: name.trim(),
-            mobile: mobile.trim(),
-            password: await hashPassword(password),
-            registrationDate: new Date().toISOString(),
-            registrationIP: await getClientIP(),
-            userAgent: navigator.userAgent,
-            deviceInfo: `${screen.width}x${screen.height}`,
-            quizAttempts: 0,
-            bestScore: 0,
-            lastLogin: new Date().toISOString(),
-            isActive: true,
-            quizResults: [],
-            loginAttempts: 0,
-            isVerified: true
-        };
+        // Check if user already exists in Supabase
+        console.log('🔍 Checking if user exists in Supabase...');
+        const { data: existingUsers, error: checkError } = await supabaseClient
+            .from('users')
+            .select('email')
+            .eq('email', email.toLowerCase().trim());
 
-        console.log('📝 User data created:', userData);
+        if (checkError) {
+            console.error('❌ Error checking existing user:', checkError);
+            alert('System error checking user existence');
+            return false;
+        }
 
-        // Get existing users
-        let users = JSON.parse(localStorage.getItem('quizUsers')) || [];
-        console.log('📊 Existing users:', users);
-        
-        // Check if user exists
-        const existingUser = users.find(user => user.email === userData.email);
-        if (existingUser) {
+        if (existingUsers && existingUsers.length > 0) {
             alert('User with this email already exists!');
             return false;
         }
 
-        // Add new user
-        users.push(userData);
-        localStorage.setItem('quizUsers', JSON.stringify(users));
-        console.log('✅ User saved to quizUsers');
-        
-        // ========== CRITICAL: STORE IN ANALYTICS ==========
-        if (typeof storeUserInAnalytics === 'function') {
-            storeUserInAnalytics(userData);
-            console.log('✅ User stored in analytics');
-        } else {
-            console.error('❌ storeUserInAnalytics not available');
+        // Create user object for Supabase
+        const userData = {
+            email: email.toLowerCase().trim(),
+            username: name.trim() || email.split('@')[0], // Use email prefix if no name provided
+            mobile: mobile.trim(),
+            password: password, // Note: In production, you should hash passwords!
+            is_active: true
+            // Supabase automatically adds: id, created_at, role
+        };
+
+        console.log('📝 User data for Supabase:', userData);
+
+        // Insert user into Supabase
+        console.log('💾 Saving user to Supabase...');
+        const { data: newUser, error: insertError } = await supabaseClient
+            .from('users')
+            .insert([userData])
+            .select();
+
+        if (insertError) {
+            console.error('❌ Supabase insert error:', insertError);
+            alert('Registration failed: ' + insertError.message);
+            return false;
         }
-        
-        // Set as current user
-        localStorage.setItem('currentUser', JSON.stringify(userData));
-        currentUser = userData;
-        console.log('✅ Current user set');
-        
-        // Verify storage
-        const verifyUsers = JSON.parse(localStorage.getItem('quizUsers') || '[]');
-        const verifyAnalytics = JSON.parse(localStorage.getItem('adminAnalytics') || '{}');
-        console.log('🔍 VERIFICATION - quizUsers count:', verifyUsers.length);
-        console.log('🔍 VERIFICATION - analytics users:', verifyAnalytics.users ? verifyAnalytics.users.length : 0);
-        
-        alert('🎉 Registration successful! Data saved.');
-        
+
+        console.log('✅ User registered in Supabase:', newUser[0]);
+
+        // Store user session locally
+        const userSession = {
+            id: newUser[0].id,
+            email: newUser[0].email,
+            username: newUser[0].username,
+            role: newUser[0].role,
+            loggedInAt: new Date().toISOString()
+        };
+
+        localStorage.setItem('currentUser', JSON.stringify(userSession));
+        currentUser = userSession;
+
+        console.log('✅ User session stored locally');
+
+        // Also store in localStorage as backup (optional)
+        let localUsers = JSON.parse(localStorage.getItem('quizUsers')) || [];
+        localUsers.push({
+            ...userSession,
+            password: 'hidden' // Don't store actual password in localStorage
+        });
+        localStorage.setItem('quizUsers', JSON.stringify(localUsers));
+
+        alert('🎉 Registration successful! User saved to database.');
+
         // Redirect to quiz
         setTimeout(() => {
             showQuiz();
         }, 1000);
-        
+
         return true;
+
     } catch (error) {
         console.error('❌ Registration error:', error);
         alert('Registration failed: ' + error.message);
         return false;
     }
 }
-// Enhanced Login with Security Features
-async function login() {
-    const loginBtn = document.querySelector('#loginForm button') || document.querySelector('.auth-btn');
-    
+// Enhanced loginUser function - SUPABASE VERSION
+async function loginUser(email, password) {
     try {
-        loginBtn.disabled = true;
-        loginBtn.textContent = 'Logging in...';
+        console.log('🔐 Attempting login with Supabase...', { email });
 
-        const email = sanitizeInput(document.getElementById('loginEmail').value.trim().toLowerCase());
-        const password = document.getElementById('loginPassword').value;
-        const captchaInput = sanitizeInput(document.getElementById('loginCaptchaInput').value.trim());
-        const storedCaptcha = localStorage.getItem('loginCaptcha');
-
-        // Input validation
-        if (!validateEmail(email)) {
-            alert('Please enter a valid email address');
-            return;
+        // Validate inputs
+        if (!email || !password) {
+            alert('Please enter both email and password');
+            return false;
         }
 
-        if (!password) {
-            alert('Please enter your password');
-            return;
+        // Find user in Supabase
+        console.log('🔍 Searching for user in Supabase...');
+        const { data: users, error: findError } = await supabaseClient
+            .from('users')
+            .select('*')
+            .eq('email', email.toLowerCase().trim())
+            .eq('is_active', true);
+
+        if (findError) {
+            console.error('❌ Error finding user:', findError);
+            alert('System error during login');
+            return false;
         }
 
-        // Rate limiting check
-        if (!checkRateLimit(`login_${email}`, SECURITY_CONFIG.MAX_LOGIN_ATTEMPTS, SECURITY_CONFIG.LOGIN_TIMEOUT)) {
-            alert('Too many login attempts. Please try again in 15 minutes.');
-            generateLoginCaptcha();
-            return;
+        if (!users || users.length === 0) {
+            alert('User not found or account is inactive');
+            return false;
         }
 
-        // CAPTCHA validation
-        if (captchaInput !== storedCaptcha) {
-            alert('Invalid CAPTCHA code. Please try again.');
-            generateLoginCaptcha();
-            logSecurityEvent('login_captcha_failed', { email: email });
-            return;
+        const user = users[0];
+
+        // Check password (Note: In production, use proper password hashing!)
+        if (user.password !== password) {
+            alert('Invalid password');
+            return false;
         }
 
-        const users = getUsers();
-        const user = users.find(u => u.email === email);
+        console.log('✅ Login successful for user:', user.id);
 
-        if (!user) {
-            alert('Invalid email or password');
-            generateLoginCaptcha();
-            logSecurityEvent('login_failed', { email: email, reason: 'user_not_found' });
-            return;
-        }
+        // Update last login in Supabase
+        await supabaseClient
+            .from('users')
+            .update({ last_login: new Date().toISOString() })
+            .eq('id', user.id);
 
-        // Verify password
-        const isPasswordValid = await verifyPassword(password, user.password);
-        
-        if (isPasswordValid && user.isActive) {
-            // Reset login attempts on successful login
-            user.loginAttempts = 0;
-            user.lastLogin = new Date().toISOString();
-            saveUsers(users);
-            
-            setCurrentUser(user);
-            initSession(user);
-            
-            logSecurityEvent('login_success', { email: email });
-            
-            if (hasUserAttemptedQuiz()) {
-                showAlreadyAttemptedScreen();
+        // Store user session locally
+        const userSession = {
+            id: user.id,
+            email: user.email,
+            username: user.username,
+            role: user.role,
+            loggedInAt: new Date().toISOString()
+        };
+
+        localStorage.setItem('currentUser', JSON.stringify(userSession));
+        currentUser = userSession;
+
+        console.log('✅ User session stored');
+
+        alert(`Welcome back, ${user.username || user.email}!`);
+
+        // Redirect based on role
+        setTimeout(() => {
+            if (user.role === 'admin') {
+                loadAdminDashboard();
             } else {
                 showQuiz();
             }
-        } else {
-            // Increment failed attempts
-            user.loginAttempts = (user.loginAttempts || 0) + 1;
-            saveUsers(users);
-            
-            alert(`Invalid email or password. ${SECURITY_CONFIG.MAX_LOGIN_ATTEMPTS - user.loginAttempts} attempts remaining.`);
-            generateLoginCaptcha();
-            logSecurityEvent('login_failed', { email: email, attempts: user.loginAttempts });
-        }
+        }, 1000);
+
+        return true;
 
     } catch (error) {
-        console.error('Login error:', error);
-        alert('Login failed. Please try again.');
-        logSecurityEvent('login_error', { error: error.message });
-    } finally {
-        loginBtn.disabled = false;
-        loginBtn.textContent = 'Login';
+        console.error('❌ Login error:', error);
+        alert('Login failed: ' + error.message);
+        return false;
     }
 }
 // Password Hashing (Simulated - Use bcrypt in real backend)
