@@ -1868,6 +1868,49 @@ async function registerUser(email, password, name = '', mobile = '') {
         return false;
     }
 }
+// Enhanced login function - ADD THIS
+async function login() {
+    try {
+        console.log('🔐 Attempting login...');
+        
+        const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+        const password = document.getElementById('loginPassword').value;
+        const captchaInput = document.getElementById('loginCaptchaInput').value.trim();
+        const storedCaptcha = localStorage.getItem('loginCaptcha');
+
+        // Validate inputs
+        if (!email || !password) {
+            alert('Please enter both email and password');
+            return;
+        }
+
+        // CAPTCHA validation
+        if (captchaInput !== storedCaptcha) {
+            alert('Invalid CAPTCHA code. Please try again.');
+            generateLoginCaptcha();
+            return;
+        }
+
+        // Use the Supabase loginUser function
+        const loginSuccessful = await loginUser(email, password);
+        
+        if (loginSuccessful) {
+            console.log('✅ Login successful');
+            // The redirect happens automatically in loginUser function
+        } else {
+            // Regenerate CAPTCHA on failed login
+            generateLoginCaptcha();
+        }
+
+    } catch (error) {
+        console.error('❌ Login error:', error);
+        alert('Login failed. Please try again.');
+        generateLoginCaptcha();
+    }
+}
+
+// Make it available globally
+window.login = login;
 // Enhanced loginUser function - SUPABASE VERSION
 async function loginUser(email, password) {
     try {
