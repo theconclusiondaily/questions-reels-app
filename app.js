@@ -27,14 +27,18 @@ if (typeof window.userAnswers === 'undefined') {
     console.log('✅ Global userAnswers initialized');
 }
 
-// Initialize currentUser if not exists
-if (typeof currentUser === 'undefined') {
-    let currentUser = getCurrentUser() || null;
-    // FIX: Use getCurrentUser() instead of direct variable
-console.log('✅ Current user initialized:', getCurrentUser() ? getCurrentUser().email : 'No user');
+// At the VERY TOP of app.js, add:
+let currentUser = null;
+
+// Then later in your code:
+function initializeCurrentUser() {
+    currentUser = getCurrentUser() || null;
+    console.log('✅ Current user initialized:', currentUser ? currentUser.email : 'No user');
 }
-// Your existing app.js code continues below...
-// [PASTE ALL YOUR EXISTING app.js CODE HERE]
+
+// Call this function when your app starts
+initializeCurrentUser();
+
 // Emergency debug code
 console.log('🔧 App starting...');
 
