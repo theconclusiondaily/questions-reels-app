@@ -373,7 +373,7 @@ function secureLogout() {
     const session = JSON.parse(localStorage.getItem('currentSession') || '{}');
     const userData = JSON.parse(localStorage.getItem('currentUser') || '{}');  // ← CHANGED to userData
     
-    logSecurityEvent('logout', { 
+    logSecurityEvent('secureLogout', { 
         email: userData.email,  // ← CHANGED to userData.email
         sessionId: session.id,
         reason: 'user_action'
@@ -461,8 +461,8 @@ function logSecurityEvent(event, details = {}) {
 //     quizId: quizId
 // });
 
-// In logout:
-// logSecurityEvent('logout', { user: currentUser.email });
+// In secureLogout:
+// logSecurityEvent('secureLogout', { user: currentUser.email });
 
 // In session timeout:
 // logSecurityEvent('session_timeout', { user: currentUser.email });
@@ -2105,7 +2105,7 @@ function showAlreadyAttemptedScreen() {
                 
                 <div class="results-actions">
                     <button class="profile-btn" onclick="showProfile()">View Detailed Profile</button>
-                    <button class="logout-btn" onclick="securelogout()">Logout</button>
+                    <button class="Logout-btn" onclick="secureLogout()">Logout</button>
                 </div>
             </div>
         </div>
@@ -2142,7 +2142,7 @@ function showQuiz() {
         '<a href="dashboard-7x3k9.html" class="admin-link" style="margin-right: 10px;">📊 Analytics</a>' : 
         ''
             }
-                <button onclick="securelogout()" class="logout-btn">Logout</button>
+                <button onclick="secureLogout()" class="Logout-btn">Logout</button>
             </div>
         </div>
         <div class="progress-bar">
@@ -2384,7 +2384,7 @@ function showSubmissionPage(timeUsed) {
                 
                 <div class="submission-actions">
                     <button class="profile-btn" onclick="showProfile()">View Profile</button>
-                    <button class="logout-btn" onclick="securelogout()">Logout</button>
+                    <button class="Logout-btn" onclick="secureLogout()">Logout</button>
                 </div>
             </div>
         </div>
@@ -2450,7 +2450,7 @@ function showProfile() {
             `}
             
             <div class="profile-actions">
-                <button onclick="securelogout()" class="logout-btn">Logout</button>
+                <button onclick="secureLogout()" class="Logout-btn">Logout</button>
             </div>
         </div>
     `;

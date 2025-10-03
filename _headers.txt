@@ -1,0 +1,17 @@
+/*
+  X-Content-Type-Options: nosniff
+
+/*.js
+  Content-Type: application/javascript
+
+/*.css
+  Content-Type: text/css
+
+/*.png
+  Content-Type: image/png
+
+/*.jpg
+  Content-Type: image/jpeg
+
+/*.gif
+  Content-Type: image/gif
