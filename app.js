@@ -1,3 +1,29 @@
+// === CRITICAL: SAFETY WRAPPER ===
+console.log('🚀 Starting Quiz App...');
+
+// Ensure critical functions exist before anything else runs
+if (typeof window.logout !== 'function') {
+    window.logout = window.secureLogout = function() {
+        console.warn('🔄 Fallback logout called');
+        localStorage.clear();
+        window.location.href = '/';
+    };
+}
+
+if (typeof window.showLoginScreen !== 'function') {
+    window.showLoginScreen = function() {
+        const root = document.getElementById('root');
+        if (root) {
+            root.innerHTML = '<h1>Please log in to continue</h1>';
+        }
+    };
+}
+
+// Mark app as loaded
+window.appLoaded = true;
+
+// Your existing app.js code continues below...
+// [PASTE ALL YOUR EXISTING app.js CODE HERE]
 // Emergency debug code
 console.log('🔧 App starting...');
 
@@ -2437,7 +2463,7 @@ window.logSecurityEvent = logSecurityEvent;
 window.runSecurityScan = runSecurityScan;
 // Make functions globally available
 window.showProfile = showProfile;
-window.logout = logout;
+window.logout = secureLogout;
 window.showLoginScreen = showLoginScreen;
 window.showRegisterScreen = showRegisterScreen;
 window.login = login;

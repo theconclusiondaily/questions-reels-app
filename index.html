@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <!-- ========== SECURITY HEADERS ========== -->
+    <!-- Security Headers -->
     <meta http-equiv="Content-Security-Policy" 
           content="default-src 'self'; 
                    script-src 'self' 'unsafe-inline'; 
@@ -20,13 +20,99 @@
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta http-equiv="X-XSS-Protection" content="1; mode=block">
     <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
-    <!-- ========== END SECURITY HEADERS ========== -->
     
     <title>The Conclusion Daily - Quiz</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div id="root"></div>
+    <div id="root">
+        <div style="padding: 20px; text-align: center;">
+            <h1>Loading Quiz App...</h1>
+            <p>Please wait while the app loads.</p>
+        </div>
+    </div>
+
+    <!-- EMERGENCY FUNCTIONS - LOAD FIRST -->
+    <script>
+        // CRITICAL: Define these functions BEFORE loading app.js
+        console.log('🔄 Loading emergency functions...');
+        
+        // Global logout function - defined early to prevent errors
+        window.logout = window.secureLogout = function() {
+            console.log('🚪 Emergency logout called');
+            try {
+                localStorage.clear();
+                sessionStorage.clear();
+                window.location.href = '/';
+            } catch (error) {
+                window.location.href = '/';
+            }
+        };
+        
+        // Safe function to show login screen
+        window.showLoginScreen = function() {
+            const root = document.getElementById('root');
+            if (root) {
+                root.innerHTML = `
+                    <div style="padding: 20px; text-align: center;">
+                        <h1>Please Log In</h1>
+                        <p>Redirecting to login...</p>
+                    </div>
+                `;
+            }
+        };
+        
+        // Safe user data functions
+        window.getUserData = function() {
+            try {
+                return JSON.parse(localStorage.getItem('userData') || '{}');
+            } catch {
+                return {};
+            }
+        };
+        
+        window.isLoggedIn = function() {
+            const userData = window.getUserData();
+            return !!(userData && userData.token);
+        };
+        
+        console.log('✅ Emergency functions loaded successfully');
+        
+        // Global error handler for undefined functions
+        window.addEventListener('error', function(event) {
+            if (event.error && event.error.message.includes('is not defined')) {
+                console.warn('⚠️ Caught undefined function error:', event.error.message);
+                event.preventDefault();
+            }
+        });
+    </script>
+
+    <!-- Load main app -->
     <script src="app.js"></script>
+    
+    <!-- Fallback in case app.js fails -->
+    <script>
+        // If app.js doesn't load properly within 5 seconds, show error
+        setTimeout(function() {
+            if (!window.appLoaded) {
+                console.error('❌ app.js failed to load properly');
+                const root = document.getElementById('root');
+                if (root && root.innerHTML.includes('Loading')) {
+                    root.innerHTML = `
+                        <div style="padding: 20px; text-align: center; color: red;">
+                            <h1>App Loading Error</h1>
+                            <p>The quiz app failed to load. Please refresh the page.</p>
+                            <button onclick="window.location.reload()" style="padding: 10px 20px; margin: 10px;">
+                                Refresh Page
+                            </button>
+                            <button onclick="window.logout()" style="padding: 10px 20px; margin: 10px;">
+                                Go to Login
+                            </button>
+                        </div>
+                    `;
+                }
+            }
+        }, 5000);
+    </script>
 </body>
 </html>
