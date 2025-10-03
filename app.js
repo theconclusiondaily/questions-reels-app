@@ -30,7 +30,8 @@ if (typeof window.userAnswers === 'undefined') {
 // Initialize currentUser if not exists
 if (typeof currentUser === 'undefined') {
     let currentUser = getCurrentUser() || null;
-    console.log('✅ Current user initialized:', currentUser ? currentUser.email : 'No user');
+    // FIX: Use getCurrentUser() instead of direct variable
+console.log('✅ Current user initialized:', getCurrentUser() ? getCurrentUser().email : 'No user');
 }
 // Your existing app.js code continues below...
 // [PASTE ALL YOUR EXISTING app.js CODE HERE]
