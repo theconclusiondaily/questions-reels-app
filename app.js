@@ -737,34 +737,7 @@ async function saveUserResult(score, total, timeUsed) {
         return null;
     }
 }
-// 🏠 ADMIN DASHBOARD - ADD OPTION 2 HERE
-// =============================================
 
-// Add this function to trigger the admin dashboard
-function showAdminDashboard() {
-    console.log('🚀 Loading admin dashboard...');
-    
-    // Clear the main content area
-    const root = document.getElementById('root');
-    if (root) {
-        root.innerHTML = `
-            <div id="adminDashboard">
-                <div style="padding: 20px; text-align: center;">
-                    <h2>Loading Admin Dashboard...</h2>
-                    <p>Please wait while we load the data.</p>
-                </div>
-            </div>
-        `;
-        
-        // Load the admin data
-        setTimeout(() => {
-            loadAdminDashboard();
-        }, 1000);
-    }
-}
-
-// Make it available globally
-window.showAdminDashboard = showAdminDashboard;
 // Fallback to localStorage if Supabase fails
 function saveToLocalStorageFallback(score, total, timeUsed) {
     try {
@@ -2944,7 +2917,255 @@ function initApp() {
         showLoginScreen();
     }
 }
+// =============================================
+// 🏠 ADMIN DASHBOARD FUNCTIONS - ADD AT THE END
+// =============================================
 
+// Function to load quiz results from Supabase for admin
+async function loadQuizResultsForAdmin() {
+    try {
+        console.log('📊 Loading quiz results from Supabase for admin...');
+        
+        const { data: results, error } = await supabaseClient
+            .from('quiz_results')
+            .select('*')
+            .order('completed_at', { ascending: false })
+            .limit(100);
+        
+        if (error) {
+            console.error('❌ Error loading quiz results:', error);
+            return [];
+        }
+        
+        console.log(`✅ Loaded ${results.length} quiz results from Supabase`);
+        return results;
+        
+    } catch (error) {
+        console.error('❌ Error in loadQuizResultsForAdmin:', error);
+        return [];
+    }
+}
+
+// Enhanced admin dashboard function
+async function loadAdminDashboard() {
+    try {
+        console.log('👨‍💼 Loading admin dashboard with Supabase data...');
+        
+        // Load users from Supabase
+        const users = await UserManager.getAllUsers();
+        
+        // Load quiz results from Supabase
+        const quizResults = await loadQuizResultsForAdmin();
+        
+        // Display the data in your admin panel
+        displayAdminData(users, quizResults);
+        
+    } catch (error) {
+        console.error('❌ Error loading admin dashboard:', error);
+        // Fallback to localStorage data
+        loadLocalAdminData();
+    }
+}
+
+// Display admin data in the UI
+function displayAdminData(users, quizResults) {
+    console.log('🎯 Displaying admin data...');
+    console.log('Users:', users.length);
+    console.log('Quiz Results:', quizResults.length);
+    
+    // Find the admin container
+    const adminContainer = document.getElementById('adminDashboard');
+    if (!adminContainer) {
+        console.error('❌ Admin container not found');
+        return;
+    }
+    
+    // Create admin HTML
+    let adminHTML = `
+        <div class="admin-dashboard">
+            <h2>📊 Admin Dashboard</h2>
+            
+            <div class="admin-stats">
+                <div class="stat-card">
+                    <h3>Total Users</h3>
+                    <div class="stat-number">${users.length}</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Total Quiz Results</h3>
+                    <div class="stat-number">${quizResults.length}</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Avg Score</h3>
+                    <div class="stat-number">${calculateAverageScore(quizResults)}%</div>
+                </div>
+            </div>
+            
+            <div class="admin-tables">
+                <div class="users-section">
+                    <h3>👥 Registered Users (${users.length})</h3>
+                    ${displayUsersTable(users)}
+                </div>
+                
+                <div class="results-section">
+                    <h3>📝 Quiz Results (${quizResults.length})</h3>
+                    ${displayResultsTable(quizResults)}
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px; text-align: center;">
+                <button onclick="window.location.reload()" style="padding: 10px 20px; margin: 5px;">
+                    Refresh Data
+                </button>
+                <button onclick="showQuiz()" style="padding: 10px 20px; margin: 5px;">
+                    Back to Quiz
+                </button>
+            </div>
+        </div>
+    `;
+    
+    adminContainer.innerHTML = adminHTML;
+}
+
+// Display users table
+function displayUsersTable(users) {
+    if (users.length === 0) {
+        return '<p>No users registered yet.</p>';
+    }
+    
+    let html = `
+        <div class="table-container" style="overflow-x: auto;">
+            <table class="users-table" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: #f5f5f5;">
+                        <th style="padding: 10px; border: 1px solid #ddd;">Username</th>
+                        <th style="padding: 10px; border: 1px solid #ddd;">Email</th>
+                        <th style="padding: 10px; border: 1px solid #ddd;">Mobile</th>
+                        <th style="padding: 10px; border: 1px solid #ddd;">Registered</th>
+                        <th style="padding: 10px; border: 1px solid #ddd;">Last Login</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    users.forEach(user => {
+        html += `
+            <tr>
+                <td style="padding: 8px; border: 1px solid #ddd;">${user.username || 'N/A'}</td>
+                <td style="padding: 8px; border: 1px solid #ddd;">${user.email}</td>
+                <td style="padding: 8px; border: 1px solid #ddd;">${user.mobile || 'N/A'}</td>
+                <td style="padding: 8px; border: 1px solid #ddd;">${formatDate(user.created_at)}</td>
+                <td style="padding: 8px; border: 1px solid #ddd;">${user.last_login ? formatDate(user.last_login) : 'Never'}</td>
+            </tr>
+        `;
+    });
+    
+    html += '</tbody></table></div>';
+    return html;
+}
+
+// Display quiz results table
+function displayResultsTable(results) {
+    if (results.length === 0) {
+        return '<p>No quiz results yet.</p>';
+    }
+    
+    let html = `
+        <div class="table-container" style="overflow-x: auto;">
+            <table class="results-table" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: #f5f5f5;">
+                        <th style="padding: 10px; border: 1px solid #ddd;">User</th>
+                        <th style="padding: 10px; border: 1px solid #ddd;">Score</th>
+                        <th style="padding: 10px; border: 1px solid #ddd;">Percentage</th>
+                        <th style="padding: 10px; border: 1px solid #ddd;">Time</th>
+                        <th style="padding: 10px; border: 1px solid #ddd;">Completed</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    results.forEach(result => {
+        html += `
+            <tr>
+                <td style="padding: 8px; border: 1px solid #ddd;">${result.username || result.user_email}</td>
+                <td style="padding: 8px; border: 1px solid #ddd;">${result.score}/${result.total_questions}</td>
+                <td style="padding: 8px; border: 1px solid #ddd;">${result.percentage}%</td>
+                <td style="padding: 8px; border: 1px solid #ddd;">${formatTime(result.time_spent)}</td>
+                <td style="padding: 8px; border: 1px solid #ddd;">${formatDate(result.completed_at)}</td>
+            </tr>
+        `;
+    });
+    
+    html += '</tbody></table></div>';
+    return html;
+}
+
+// Helper functions
+function calculateAverageScore(results) {
+    if (results.length === 0) return 0;
+    const total = results.reduce((sum, result) => sum + parseFloat(result.percentage), 0);
+    return Math.round(total / results.length);
+}
+
+function formatDate(dateString) {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString();
+}
+
+function formatTime(seconds) {
+    if (!seconds) return '0s';
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+}
+
+// Fallback to localStorage data
+function loadLocalAdminData() {
+    console.log('🔄 Loading admin data from localStorage...');
+    const users = getUsers();
+    const quizAttempts = JSON.parse(localStorage.getItem('quizAttempts')) || [];
+    
+    displayAdminData(users, quizAttempts);
+}
+
+// =============================================
+// 🚀 ADMIN DASHBOARD TRIGGER - ADD THIS TOO
+// =============================================
+
+function showAdminDashboard() {
+    console.log('🚀 Loading admin dashboard...');
+    
+    // Clear the main content area
+    const root = document.getElementById('root');
+    if (root) {
+        root.innerHTML = `
+            <div id="adminDashboard">
+                <div style="padding: 20px; text-align: center;">
+                    <h2>Loading Admin Dashboard...</h2>
+                    <p>Please wait while we load the data from Supabase.</p>
+                </div>
+            </div>
+        `;
+        
+        // Load the admin data
+        setTimeout(() => {
+            loadAdminDashboard();
+        }, 1000);
+    }
+}
+
+// Make it available globally
+window.showAdminDashboard = showAdminDashboard;
+
+// Test function
+async function testAdminDashboard() {
+    console.log('🧪 Testing admin dashboard...');
+    showAdminDashboard();
+}
+
+window.testAdmin = testAdminDashboard;
+
+console.log('✅ Admin dashboard functions loaded');
 window.onload = initApp;
 
 
